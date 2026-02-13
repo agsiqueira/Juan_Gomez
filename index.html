@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <script type="text/javascript" src="./main.js" defer></script>
+  <link rel="stylesheet" href="./css/main.css">
+  <link rel="stylesheet" type="text/css" href="./css/boilerplate/bootstrap.css">
+  <link href='//fonts.googleapis.com/css?family=Roboto:300' rel='stylesheet' type='text/css'>
+  <link href='./css/font-awesome/css/font-awesome.min.css' rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+  <video id="myVideo" style="display:none" autoplay poster="https://agsdonationv2.s3.us-east-1.amazonaws.com/assets/modal/images/poster.png" onended="switchIdle()"></video>
+  <audio id="myAudio" style="display:none;">
+    Your browser does not support the audio element.
+  </audio>
+
+  <video id="idleVideo" style="display:none" autoplay poster="https://agsdonationv2.s3.us-east-1.amazonaws.com/assets/modal/images/poster.png" muted>
+    <source src="https://agsdonationv2.s3.us-east-1.amazonaws.com/assets/modal/videos/interaction/idle.mp4" type="video/mp4">
+    Your browser does not support HTML5 video.
+  </video>
+
+  <iframe id='intro' style="display: block; position: absolute; z-index: 1005; left: 1%; top: 1%; width: 100%; height: 100%; border: none" src="./intro.html"></iframe>
+  <iframe id='outro' style="display: none; position: absolute; z-index: 1005; left: 1%; top: 1%; width: 100%; height: 100%; border: none" src="./outro.html"></iframe>
+  <div style="height:auto; width:100%">
+    <div id='infoContainer'>
+      <div id='prog'>
+        <h1 class="title-wrapper">Contexto Clínico</h1>
+        <div class="messageList">
+          <div class="alert alert-info">
+            <p><strong>Paciente:</strong> Homem, 25 anos, Maurício Rezende de Alencar.</p>
+            <p><strong>Ocupação:</strong> Estudante universitário, trabalhava como motoboy.</p>
+            <p><strong>Características físicas:</strong> 1,85m de altura, pele branca, cabelos pretos, olhos castanhos.</p>
+            <p><strong>Estado civil:</strong> Solteiro, sem filhos.</p>
+            <p><strong>Histórico Clínico:</strong> Paciente envolveu-se em colisão entre moto e automóvel há 12 dias, sendo encontrado inconsciente na cena pelo SAMU.</p>
+            <p>Encaminhado ao hospital em estado grave com Glasgow 3 e sinais de fratura exposta de fêmur esquerdo.</p>
+            <p>Foi entubado ainda na cena e estabilizado para transporte.</p>
+            <p><strong>Família:</strong> A mãe é a principal familiar presente e está emocionalmente abalada, pois já recebeu a notícia da morte cerebral pela equipe médica da UTI.</p>
+          </div>
+        </div>
+      </div>
+      <div id='discoveries'>
+        <h1 class="title-wrapper">Discoveries (0/15)</h1>
+        <div id=dList class="discoveryList">
+          <button class="disc_category">
+            <div id="scene1">
+              Cena 1 (0/3)
+            </div>
+          </button>
+          <div class="content">
+            <div id = "scene1_discs"></div>
+          </div>
+          <p></p>
+          <button class="disc_category">
+            <div id="scene2">
+              Cena 2 (0/4)
+            </div>
+          </button>
+          <div class="content">
+            <div id = "scene2_discs"></div>
+          </div>
+          <p></p>
+          <button class="disc_category">
+            <div id="scene3">
+              Cena 3 (0/5)
+            </div>
+          </button>
+          <div class="content">
+            <div id = "scene3_discs"></div>
+          </div>
+          <p></p>
+          <button class="disc_category">
+            <div id="scene4">
+              Cena 4 (0/3)
+            </div>
+          </button>
+          <div class="content">
+            <div id = "scene4_discs"></div>
+          </div>
+        </div>
+      </div>
+      <div id="potentialquestions" style="display: none; width: 300px; margin-left: auto; margin-right: 335px; padding-top:16%">
+        <h class=title-wrapper>Do you mean to ask?</h>
+        <div class=messageList>
+          <div style="width:100%">
+            <ul id="questionList"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="sceneConclusion" class="popup-overlay" style="display: none;">
+    <div class="popup-window">
+      <button id="popup-close" class="close-button">&times;</button>
+      <h2 id="concludedScene">Parabéns, cena # concluída</h2>
+    </div>
+  </div>
+  <div id="focusPopup" class="popup-overlay" style="display: none;">
+    <div class="popup-window">
+      <button id="popup-close2" class="close-button">&times;</button>
+      <h3 style="margin: 15px;">Humm… Você fez algumas perguntas que não se alinham com esta cena.</h3>
+      <strong>Nesta cena, os objetivos são:</strong>
+      <div id="sceneObjectives"></div>
+      <p>Tente fazer perguntas que se alinham com os objetivos da cena. Assim, você poderá prosseguir para as próximas cenas.</p>
+    </div>
+  </div>
+  <div id="gptAnswer" class="popup-overlay" style="display: none;">
+    <div class="popup-window">
+      <button id="popup-close3" class="close-button">&times;</button>
+      <h3 style="margin: 15px;">
+        Humm… Esta perguta não se alinha com a conversa planejada.
+        Portanto, aqui está uma resposta tentativa:
+      </h3>
+      <div class="chat-list">
+        <div id="question" class="df-message-bubble user"></div>
+        <div id="reply" class="df-message-bubble bot"></div>
+      </div>
+    </div>
+  </div>
+  <div class="chat-container">
+    <h1 class="title-wrapper">
+      Conversa com Maria
+    </h1>
+    <div id="chat-box">
+    </div>
+    <div class="chat-input">
+      <input type="text" id="chatInput" placeholder="Pergunte algo...">
+      <button id="mic-button" title="Clique para falar">🎤</button>
+      <button id="send-button">➤</button>
+    </div>
+  </div>
+  <div id="floating-ui">
+    <button class="rounded-btn" onclick="redirectPage()">Finalizar Conversa</button>
+  </div>
+</body>
+</html>
+
