@@ -241,7 +241,7 @@ async function sendMessage() {
     chatBox.scrollTop = chatBox.scrollHeight;
 
     const gptInput = prompt
-        + ```
+        + `
 
 ===== USER PROMPT =====
 USER_QUESTION:
@@ -249,7 +249,7 @@ USER_QUESTION:
 ${text}
 >>>
 
-```
+`
         + q_and_a
         + (!interactionHistory.isEmpty() ? "\n\nHere is your interaction history with previous Q&As. Use it as reference, as needed:" : "")
         + interactionHistory 
