@@ -413,11 +413,12 @@ function unfocusedPopUp() {
 
 // Generates Text-To-Speech Audio
 async function GenerateTTS(gptResponse){
+    gptResponse = gptResponse.replace(/\([^)]*\)/g, "")
     try{
         const payload = {
             text: gptResponse,
-            language_code: "pt-BR",
-            voice_name: "pt-BR-Chirp3-HD-Achernar"
+            language_code: "es-US",
+            voice_name: "es-US-Chirp3-HD-Iapetus"
         };
 
         // get Google Cloud Speech-to-Text API response from endpoint
