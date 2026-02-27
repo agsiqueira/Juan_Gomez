@@ -40,7 +40,7 @@ Output constraints:
 
 If matched=false: answer_index must be null and answer must be "NO_MATCH".
 If matched=true: answer must be copied EXACTLY from the ANSWERS section for that answer_index (no paraphrasing, no additions).
-```
+```;
 
 export const q_and_a = ```
 QUESTIONS (answer_index | question):
@@ -1268,4 +1268,4 @@ ANSWERS (answer_index: answer):
 98: "I am alone here."
 99: "At this point it hurts all the time."
 100: "No"
-```
+```;
