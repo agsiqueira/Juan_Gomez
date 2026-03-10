@@ -185,6 +185,8 @@ async function sendMessage() {
         //     numUnfocusedQuestions++;
         // }
 
+        console.log(replyId);
+        console.log(String(replyId).length);
         const videoId = ("0").repeat(3 - String(replyId).length) + replyId;
         console.log("Formatted video ID: ", videoId);
         const videoURL = AWS_videoURL_Base + videoId + ".mp4";
