@@ -186,6 +186,7 @@ async function sendMessage() {
         // }
 
         const videoId = ("0").repeat(3 - String(replyId).length) + replyId;
+        console.log("Formatted video ID: ", videoId);
         const videoURL = AWS_videoURL_Base + videoId + ".mp4";
         console.log("Change to this: " + videoURL);
         queuedVid = videoURL;
