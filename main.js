@@ -1,40 +1,10 @@
-import { prompt, q_and_a } from "./prompt.js";
-
-class InteractionHistory {
-    constructor(maxLength) {
-        this.history = [];
-        this.maxLength = maxLength;
-    }
-
-    addEntry(q, a) {
-        this.history.push( {question: q, answer: a} );
-        if (this.history.length > this.maxLength) {
-            this.history.shift();
-        }
-    }
-
-    isEmpty() {
-        return this.history.length === 0;
-    }
-
-    toString() {
-        let result = "";
-        for (const entry of this.history) {
-            result += `\n\nPergunta: ${entry.question}\nResposta: ${entry.answer}`
-        }
-        return result;
-    }
-}
-
-let interactionHistory = new InteractionHistory(10);
-
 let numUnfocusedQuestions = 0;
 
 // 2d array for interaction logging
 let logData = []
 
 // Base for Maria videos (CHANGE THIS IF YOU NEED TO DO DIFFERENT VH)
-const AWS_videoURL_Base = "https://agsdonationv2.s3.us-east-1.amazonaws.com/assets/modal/videos/interaction/";
+const AWS_videoURL_Base = "https://agsdentistry.s3.us-east-1.amazonaws.com/assets/videos/interaction";
 
 // Attaches audio to the video player so that it plays
 let audioPlayer = document.getElementById('myAudio');
@@ -55,36 +25,36 @@ document.addEventListener('DOMContentLoaded', () => {
     // Ensure video appears
     // showMaria();
 
-    // const idle = document.getElementById("idleVideo");
-    // idle.onended = () => {
-    //     if (queuedVid) {
-    //         const url = queuedVid;
-    //         queuedVid = null;
-    //         const vid = changeVid(url);
+    const idle = document.getElementById("idleVideo");
+    idle.onended = () => {
+        if (queuedVid) {
+            const url = queuedVid;
+            queuedVid = null;
+            const vid = changeVid(url);
 
-    //         idle.style.opacity = "0";
-    //         vid.style.opacity = "1";
-    //         vid.play();
+            idle.style.opacity = "0";
+            vid.style.opacity = "1";
+            vid.play();
 
-    //         vid.onended = () => {
-    //             switchIdle();
-    //             if (sceneCompleted) {
-    //                 // scene completed is target scene, so make the next scene the target
-    //                 if (curScene === curTargetScene) {
-    //                     curTargetScene++;
-    //                 }
-    //                 // change completed scene number on the popup and display it
-    //                 document.getElementById('concludedScene').innerText = `Parabéns, cena ${curScene} concluída`;
-    //                 document.getElementById('sceneConclusion').style.display = 'flex';
-    //                 sceneCompleted = false;
-    //             }
-    //         }
-    //     }
-    //     else {
-    //         idle.currentTime = 0;
-    //         idle.play();
-    //     }
-    // };
+            vid.onended = () => {
+                switchIdle();
+                if (sceneCompleted) {
+                    // scene completed is target scene, so make the next scene the target
+                    if (curScene === curTargetScene) {
+                        curTargetScene++;
+                    }
+                    // change completed scene number on the popup and display it
+                    document.getElementById('concludedScene').innerText = `Parabéns, cena ${curScene} concluída`;
+                    document.getElementById('sceneConclusion').style.display = 'flex';
+                    sceneCompleted = false;
+                }
+            }
+        }
+        else {
+            idle.currentTime = 0;
+            idle.play();
+        }
+    };
 
     // trigger send via button click
     document.getElementById('send-button').addEventListener('click', sendMessage);
@@ -138,24 +108,9 @@ async function sendMessage() {
     chatBox.appendChild(newResDiv);
     chatBox.scrollTop = chatBox.scrollHeight;
 
-    const gptInput = prompt
-        + `
+    console.log("Input to GPT:", text);
 
-===== USER PROMPT =====
-USER_QUESTION:
-<<<
-${text}
->>>
-
-`
-        + q_and_a
-        + (!interactionHistory.isEmpty() ? "\n\nHere is your interaction history with previous Q&As. Use it as reference, as needed:" : "")
-        + interactionHistory 
-        + "\n\nNow return the JSON."
-    console.log("Input to GPT:", gptInput);
-
-    let rawRes;
-
+    let res;
     try {
         const response = await fetch(ENDPOINT_URL + 'JuanGomez/chat_exact', {
             method: 'POST',
@@ -166,83 +121,72 @@ ${text}
             })
         });
 
-        rawRes = await response.json();
+        res = await response.json();
+        console.log("GPT Response: ", res);
     } catch (error) {
         console.error("Error:", error);
         return;
     }
 
-    console.log("HERE HELLO HI:", rawRes);
-
-    let parsedRes;
-    try {
-        parsedRes = JSON.parse(rawRes.message_response);
-    } catch (error) {
-        console.error("Error parsing GPT response: ", error);
-        newResDiv.textContent = rawRes.message_response;
-        return;
-    }
-    console.log("GPT Response: ", parsedRes);
-
-    const replyText = typeof parsedRes.answer === "string" ? parsedRes.answer : "Formatting error in response";
-    const replyId = parsedRes.id;
+    const replyText = res.answer;
+    const replyId = res.answer_id;
+    const similarity = res.similarity;
 
     newResDiv.textContent = replyText;
 
-    interactionHistory.addEntry(text, replyText);
-
-    if (replyId in allIntents) {
+    if (replyId !== -1) {
         // checks if this is the first time intent has been found
-        if (!allIntents[replyId].found) {
-            // marks intent as found
-            allIntents[replyId].found = true;
+        // if (!allIntents[replyId].found) {
+        //     // marks intent as found
+        //     allIntents[replyId].found = true;
 
             // new intent related question --> reset counter for unfocused questions
             numUnfocusedQuestions = 0;
 
-            curScene = allIntents[replyId].scene;
-            // increments respective scene and total discovery counts
-            scenes[curScene].curCount++;
-            curDiscTotal++;
+            // curScene = allIntents[replyId].scene;
+            // // increments respective scene and total discovery counts
+            // scenes[curScene].curCount++;
+            // curDiscTotal++;
 
-            // inserts new HTML div element for newly found discovery into its proper scene
-            let new_disc_html = "<div>" + "- "+ allIntents[replyId].desc + "</div>";
-            let htmlID = "scene" + curScene;
-            document.getElementById(htmlID + "_discs").innerHTML = new_disc_html + 
-                document.getElementById(htmlID + "_discs").innerHTML;
+            // // inserts new HTML div element for newly found discovery into its proper scene
+            // let new_disc_html = "<div>" + "- "+ allIntents[replyId].desc + "</div>";
+            // let htmlID = "scene" + curScene;
+            // document.getElementById(htmlID + "_discs").innerHTML = new_disc_html + 
+            //     document.getElementById(htmlID + "_discs").innerHTML;
 
             // edit HTML text element for # of discoveries found per scene
-            const indexOfCount = document.getElementById(htmlID).textContent.indexOf("(");
-            document.getElementById(htmlID).textContent = document.getElementById(htmlID).textContent.substring(0, indexOfCount) + 
-                `(${scenes[curScene].curCount}/${scenes[curScene].totalCount})`;
+            // const indexOfCount = document.getElementById(htmlID).textContent.indexOf("(");
+            // document.getElementById(htmlID).textContent = document.getElementById(htmlID).textContent.substring(0, indexOfCount) + 
+            //     `(${scenes[curScene].curCount}/${scenes[curScene].totalCount})`;
 
-            // highlight most recent discovery scene by turning it orange (un-highlight prev)
-            Object.keys(scenes).forEach(i => {
-                if (i == curScene) {
-                    document.getElementById("scene" + i).parentElement.classList.add("active");
-                }
-                else {
-                    document.getElementById("scene" + i).parentElement.classList.remove("active");
-                }
-            });
+            // // highlight most recent discovery scene by turning it orange (un-highlight prev)
+            // Object.keys(scenes).forEach(i => {
+            //     if (i == curScene) {
+            //         document.getElementById("scene" + i).parentElement.classList.add("active");
+            //     }
+            //     else {
+            //         document.getElementById("scene" + i).parentElement.classList.remove("active");
+            //     }
+            // });
 
-            // ensure discovery's respective scene content is displayed (even if was hidden previously by button click)
-            document.getElementById(htmlID).parentElement.nextElementSibling.style.display = 'block';
+            // // ensure discovery's respective scene content is displayed (even if was hidden previously by button click)
+            // document.getElementById(htmlID).parentElement.nextElementSibling.style.display = 'block';
 
-            // update total discovery count
-            document.getElementById("discoveries").querySelector("h1").textContent = `Discoveries (${curDiscTotal}/${goalDiscTotal})`;
+            // // update total discovery count
+            // document.getElementById("discoveries").querySelector("h1").textContent = `Discoveries (${curDiscTotal}/${goalDiscTotal})`;
 
-            // checks if scene is completed
-            if (scenes[curScene].curCount === scenes[curScene].totalCount) {
-                // mark scene as completed so that pop up works
-                sceneCompleted = true;
-            }
-        }
-        else {  // intent related question already asked previously
-            numUnfocusedQuestions++;
-        }
+            // // checks if scene is completed
+            // if (scenes[curScene].curCount === scenes[curScene].totalCount) {
+            //     // mark scene as completed so that pop up works
+            //     sceneCompleted = true;
+            // }
+        // }
+        // else {  // intent related question already asked previously
+        //     numUnfocusedQuestions++;
+        // }
 
-        const videoURL = AWS_videoURL_Base + replyId + ".mp4";
+        const videoId = ("0").repeat(3 - String(replyId).length) + replyId;
+        const videoURL = AWS_videoURL_Base + videoId + ".mp4";
         console.log("Change to this: " + videoURL);
         queuedVid = videoURL;
     }
@@ -302,16 +246,16 @@ function changeVid(URL) {
 }
 
 function unfocusedPopUp() {
-    let objList = "";
-    // loop through each discovery intent of the current scene and add to html list
-    Object.keys(allIntents).forEach(key => {
-        const intent = allIntents[key];
-        if (intent.scene === curTargetScene) {
-            objList += "<p>" + "- " + intent.desc + "</p>";
-        }
-    });
-    // add list to popup and show it
-    document.getElementById("sceneObjectives").innerHTML = objList
+    // let objList = "";
+    // // loop through each discovery intent of the current scene and add to html list
+    // Object.keys(allIntents).forEach(key => {
+    //     const intent = allIntents[key];
+    //     if (intent.scene === curTargetScene) {
+    //         objList += "<p>" + "- " + intent.desc + "</p>";
+    //     }
+    // });
+    // // add list to popup and show it
+    // document.getElementById("sceneObjectives").innerHTML = objList
     document.getElementById('focusPopup').style.display = 'flex';
 }
 
