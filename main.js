@@ -157,7 +157,7 @@ ${text}
     let rawRes;
 
     try {
-        const response = await fetch(ENDPOINT_URL + 'JuanGomez/chat', {
+        const response = await fetch(ENDPOINT_URL + 'JuanGomez/chat_exact', {
             method: 'POST',
             headers: { "Content-Type": "application/json", },
             body: JSON.stringify({ 
@@ -172,7 +172,7 @@ ${text}
         return;
     }
 
-    console.log("HERE HELLO HI:", rawRes.response);
+    console.log("HERE HELLO HI:", rawRes);
 
     let parsedRes;
     try {
