@@ -28,108 +28,6 @@ class InteractionHistory {
 
 let interactionHistory = new InteractionHistory(10);
 
-let allIntents = {
-    "010_apresentacao_do_profissional": {
-        desc: "Apresentação do Profissional",
-        scene: 1,
-        found: false
-    },
-    "020_oferece_acompanhante": {
-        desc: "Oferece Acompanhante",
-        scene: 1,
-        found: false
-    },
-    "030_pergunta_o_que_o_familiar_sabe_do_caso": {
-        desc: "Pergunta o que o Familiar Sabe do Caso",
-        scene: 1,
-        found: false
-    },
-    "040_compreensao_do_diagnostico": {
-        desc: "Compreensão do Diagnóstico",
-        scene: 2,
-        found: false
-    },
-    "050_explicacao_da_evolucao_do_caso": {
-        desc: "Explicação da Evolução do Caso",
-        scene: 2,
-        found: false
-    },
-    "060_sobre_prontuario_e_direitos": {
-        desc: "Sobre prontuário e direitos",
-        scene: 2,
-        found: false
-    },
-    "070_admissao_de_possivel_falha": {
-        desc: "Admissão de possível falha",
-        scene: 2,
-        found: false
-    },
-    "071_oferta_de_conversa_com_medico_ou_neuro": {
-        desc: "Oferta de conversa com médico/neuro",
-        scene: 3,
-        found: false
-    },
-    "072_oferta_de_intervalo_para_o_familiar": {
-        desc: "Oferta de intervalo para o familiar",
-        scene: 3,
-        found: false
-    },
-    "080_oferta_apoio_espiritual": {
-        desc: "Oferta Apoio Espiritual",
-        scene: 3,
-        found: false
-    },
-    "081_divulgacao_para_a_imprensa": {
-        desc: "Divulgação para a Imprensa",
-        scene: 3,
-        found: false
-    },
-    "090_oferta_visita_uti": {
-        desc: "Oferta Visita a UTI",
-        scene: 3,
-        found: false
-    },
-    "110_oferta_de_doacao_de_orgaos": {
-        desc: "Oferta de Doação de Órgãos",
-        scene: 4,
-        found: false
-    },
-    "120_explicacao_sobre_o_processo_de_doacao": {
-        desc: "Explicação sobre o Processo de Doação",
-        scene: 4,
-        found: false
-    },
-    "130_oferta_de_doacao_de_orgaos_aceite": {
-        desc: "Oferta de doação de órgãos - aceite",
-        scene: 4,
-        found: false
-    }
-};
-
-let scenes = {
-    1: {
-        curCount: 0,
-        totalCount: 3
-    },
-    2: {
-        curCount: 0,
-        totalCount: 4
-    },
-    3: {
-        curCount: 0,
-        totalCount: 5
-    },
-    4: {
-        curCount: 0,
-        totalCount: 3
-    }
-};
-
-let curDiscTotal = 0;
-const goalDiscTotal = 15;
-let curScene = 0;
-let curTargetScene = 1;
-let sceneCompleted = false;
 let numUnfocusedQuestions = 0;
 
 // 2d array for interaction logging
@@ -155,38 +53,38 @@ const userInput = document.getElementById('chatInput');
 // add all event listeners after DOM content is loaded
 document.addEventListener('DOMContentLoaded', () => {
     // Ensure video appears
-    showMaria();
+    // showMaria();
 
-    const idle = document.getElementById("idleVideo");
-    idle.onended = () => {
-        if (queuedVid) {
-            const url = queuedVid;
-            queuedVid = null;
-            const vid = changeVid(url);
+    // const idle = document.getElementById("idleVideo");
+    // idle.onended = () => {
+    //     if (queuedVid) {
+    //         const url = queuedVid;
+    //         queuedVid = null;
+    //         const vid = changeVid(url);
 
-            idle.style.opacity = "0";
-            vid.style.opacity = "1";
-            vid.play();
+    //         idle.style.opacity = "0";
+    //         vid.style.opacity = "1";
+    //         vid.play();
 
-            vid.onended = () => {
-                switchIdle();
-                if (sceneCompleted) {
-                    // scene completed is target scene, so make the next scene the target
-                    if (curScene === curTargetScene) {
-                        curTargetScene++;
-                    }
-                    // change completed scene number on the popup and display it
-                    document.getElementById('concludedScene').innerText = `Parabéns, cena ${curScene} concluída`;
-                    document.getElementById('sceneConclusion').style.display = 'flex';
-                    sceneCompleted = false;
-                }
-            }
-        }
-        else {
-            idle.currentTime = 0;
-            idle.play();
-        }
-    };
+    //         vid.onended = () => {
+    //             switchIdle();
+    //             if (sceneCompleted) {
+    //                 // scene completed is target scene, so make the next scene the target
+    //                 if (curScene === curTargetScene) {
+    //                     curTargetScene++;
+    //                 }
+    //                 // change completed scene number on the popup and display it
+    //                 document.getElementById('concludedScene').innerText = `Parabéns, cena ${curScene} concluída`;
+    //                 document.getElementById('sceneConclusion').style.display = 'flex';
+    //                 sceneCompleted = false;
+    //             }
+    //         }
+    //     }
+    //     else {
+    //         idle.currentTime = 0;
+    //         idle.play();
+    //     }
+    // };
 
     // trigger send via button click
     document.getElementById('send-button').addEventListener('click', sendMessage);
@@ -257,11 +155,15 @@ ${text}
     console.log("Input to GPT:", gptInput);
 
     let rawRes;
+
     try {
-        const response = await fetch(ENDPOINT_URL + 'gpttext', {
+        const response = await fetch(ENDPOINT_URL + '/JuanGomez/chat', {
             method: 'POST',
             headers: { "Content-Type": "application/json", },
-            body: JSON.stringify({ message: gptInput })
+            body: JSON.stringify({ 
+                message: text,
+                session_id: 1
+            })
         });
 
         rawRes = await response.json();
@@ -269,6 +171,8 @@ ${text}
         console.error("Error:", error);
         return;
     }
+
+    console.log("HERE HELLO HI:", rawRes.response);
 
     let parsedRes;
     try {
