@@ -162,7 +162,7 @@ ${text}
             headers: { "Content-Type": "application/json", },
             body: JSON.stringify({ 
                 message: text,
-                session_id: 1
+                session_id: "1"
             })
         });
 
