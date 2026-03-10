@@ -42,7 +42,7 @@ let audioPlayer = document.getElementById('myAudio');
 let queuedVid = null;
 
 // API endpoint for chatgpt & google cloud access
-const ENDPOINT_URL = 'https://verg-api-zone.cise.ufl.edu/api/';
+const ENDPOINT_URL = 'https://verg-api-zone.cise.ufl.edu/';
 
 // interaction chat box
 const chatBox = document.getElementById('chat-box');
@@ -157,7 +157,7 @@ ${text}
     let rawRes;
 
     try {
-        const response = await fetch(ENDPOINT_URL + '/JuanGomez/chat', {
+        const response = await fetch(ENDPOINT_URL + 'JuanGomez/chat', {
             method: 'POST',
             headers: { "Content-Type": "application/json", },
             body: JSON.stringify({ 
@@ -326,7 +326,7 @@ async function GenerateTTS(gptResponse){
         };
 
         // get Google Cloud Speech-to-Text API response from endpoint
-        const response = await fetch(ENDPOINT_URL + 'googlecloudtts', {
+        const response = await fetch(ENDPOINT_URL + 'api/googlecloudtts', {
             headers: { "Content-Type": "application/json" },
             method: 'POST',
             body: JSON.stringify(payload)
@@ -401,7 +401,7 @@ function addSTTButton() {
             formData.append('audio', audioBlob, `recording.${extension}`);
             formData.append('language_code', 'pt-BR');
 
-            const response = await fetch(ENDPOINT_URL + 'googlecloudstt', {
+            const response = await fetch(ENDPOINT_URL + 'api/googlecloudstt', {
                 method: 'POST',
                 body: formData,
             });
