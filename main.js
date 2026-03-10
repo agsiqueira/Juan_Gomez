@@ -124,12 +124,12 @@ async function sendMessage() {
         res = await response.json();
         console.log("GPT Response: ", res);
     } catch (error) {
-        console.error("Error:", error);
+        console.error("Error calling GPT API:", error);
         return;
     }
 
     const replyText = res.answer;
-    const replyId = res.answer_id;
+    const replyId = res.answer_index;
     const similarity = res.similarity;
 
     newResDiv.textContent = replyText;
