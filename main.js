@@ -38,16 +38,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             vid.onended = () => {
                 switchIdle();
-                if (sceneCompleted) {
-                    // scene completed is target scene, so make the next scene the target
-                    if (curScene === curTargetScene) {
-                        curTargetScene++;
-                    }
-                    // change completed scene number on the popup and display it
-                    document.getElementById('concludedScene').innerText = `Parabéns, cena ${curScene} concluída`;
-                    document.getElementById('sceneConclusion').style.display = 'flex';
-                    sceneCompleted = false;
-                }
+                // if (sceneCompleted) {
+                //     // scene completed is target scene, so make the next scene the target
+                //     if (curScene === curTargetScene) {
+                //         curTargetScene++;
+                //     }
+                //     // change completed scene number on the popup and display it
+                //     document.getElementById('concludedScene').innerText = `Parabéns, cena ${curScene} concluída`;
+                //     document.getElementById('sceneConclusion').style.display = 'flex';
+                //     sceneCompleted = false;
+                // }
             }
         }
         else {
@@ -134,7 +134,8 @@ async function sendMessage() {
 
     newResDiv.textContent = replyText;
 
-    if (replyId !== -1) {
+    // ====================== CHANGE TO replyId !== -1 WHEN OTHER VIDS ARE DONE ============================================================
+    if (replyId >= 1 && replyId <= 3) {
         // checks if this is the first time intent has been found
         // if (!allIntents[replyId].found) {
         //     // marks intent as found
