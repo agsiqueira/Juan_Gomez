@@ -4,7 +4,7 @@ let numUnfocusedQuestions = 0;
 let logData = []
 
 // Base for Maria videos (CHANGE THIS IF YOU NEED TO DO DIFFERENT VH)
-const AWS_videoURL_Base = "https://agsdentistry.s3.us-east-1.amazonaws.com/assets/videos/interaction";
+const AWS_videoURL_Base = "https://agsdentistry.s3.us-east-1.amazonaws.com/assets/videos/interaction/";
 
 // Attaches audio to the video player so that it plays
 let audioPlayer = document.getElementById('myAudio');
@@ -23,7 +23,7 @@ const userInput = document.getElementById('chatInput');
 // add all event listeners after DOM content is loaded
 document.addEventListener('DOMContentLoaded', () => {
     // Ensure video appears
-    // showMaria();
+    showMaria();
 
     const idle = document.getElementById("idleVideo");
     idle.onended = () => {
@@ -185,10 +185,7 @@ async function sendMessage() {
         //     numUnfocusedQuestions++;
         // }
 
-        console.log(replyId);
-        console.log(String(replyId).length);
         const videoId = ("0").repeat(3 - String(replyId).length) + replyId;
-        console.log("Formatted video ID: ", videoId);
         const videoURL = AWS_videoURL_Base + videoId + ".mp4";
         console.log("Change to this: " + videoURL);
         queuedVid = videoURL;
