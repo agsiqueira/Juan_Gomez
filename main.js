@@ -344,7 +344,7 @@ function addSTTButton() {
 
             const formData = new FormData();
             formData.append('audio', audioBlob, `recording.${extension}`);
-            formData.append('language_code', 'en-US');
+            formData.append('language_code', 'en');
 
             const response = await fetch(ENDPOINT_URL + 'api/googlecloudstt', {
                 method: 'POST',
