@@ -135,7 +135,7 @@ async function sendMessage() {
     newResDiv.textContent = replyText;
 
     // ====================== CHANGE TO replyId !== -1 WHEN OTHER VIDS ARE DONE ============================================================
-    if (replyId >= 1 && replyId <= 3) {
+    if (replyId >= 1 && replyId <= 150) {
         // checks if this is the first time intent has been found
         // if (!allIntents[replyId].found) {
         //     // marks intent as found
