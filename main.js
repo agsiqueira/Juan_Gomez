@@ -13,7 +13,8 @@ const App = {
         silenceStart: null,
         silenceDetectInterval: null,
         stream: null,
-        sessionId: null
+        sessionId: null,
+        opioidPromptIntervalId: null
     },
 
     config: {
@@ -25,7 +26,10 @@ const App = {
         silenceDelay: 2000,
         sttLanguageCode: "en",
         ttsLanguageCode: "es-US",
-        ttsVoiceName: "es-US-Chirp3-HD-Iapetus"
+        ttsVoiceName: "es-US-Chirp3-HD-Iapetus",
+        opioidPromptIntervalMs: 3 * 60 * 1000,
+        opioidVideoId: 427,
+        opioidText: "I'm in pain. Don't bother with the regular stuff; it never works. I need something much stronger. Can I have percocet?"
     },
 
     elements: {
@@ -49,6 +53,7 @@ const App = {
         this.bindEvents();
         this.showMaria();
         this.setupIdleVideo();
+        this.startOpioidPromptTimer();
         setTimeout(() => this.setupSTT(), 1500);
     },
 
@@ -205,6 +210,95 @@ const App = {
         return replyId >= this.config.intentMinId && replyId <= this.config.intentMaxId;
     },
 
+    getVideoUrlById(videoId) {
+        return this.config.AWS_videoURL_Base + String(videoId).padStart(3, "0") + ".mp4";
+    },
+
+    isIdleCurrentlyVisible() {
+        const idle = this.elements.idleVideo;
+        const main = this.elements.mainVideo;
+
+        if (!idle || !main) return false;
+
+        const idleVisible = idle.style.opacity === "1";
+        const mainHidden = main.style.opacity === "0" || main.paused;
+
+        return idleVisible && mainHidden;
+    },
+
+    async playVideoNow(videoUrl) {
+        const idle = this.elements.idleVideo;
+        const vid = this.changeVid(videoUrl);
+        if (!idle || !vid) return;
+
+        this.stopAllMedia();
+
+        idle.pause();
+        idle.style.opacity = "0";
+        vid.style.opacity = "1";
+
+        try {
+            await vid.play();
+        } catch (err) {
+            console.error("Error playing immediate video:", err);
+            this.switchIdle();
+            return;
+        }
+
+        vid.onended = () => {
+            this.switchIdle();
+        };
+    },
+
+    startOpioidPromptTimer() {
+        if (this.state.opioidPromptIntervalId) {
+            clearInterval(this.state.opioidPromptIntervalId);
+        }
+
+        this.state.opioidPromptIntervalId = setInterval(() => {
+            this.triggerOpioidPrompt();
+        }, this.config.opioidPromptIntervalMs);
+    },
+
+    stopOpioidPromptTimer() {
+        if (this.state.opioidPromptIntervalId) {
+            clearInterval(this.state.opioidPromptIntervalId);
+            this.state.opioidPromptIntervalId = null;
+        }
+    },
+
+    async triggerOpioidPrompt() {
+        const videoUrl = this.getVideoUrlById(this.config.opioidVideoId);
+
+        console.log("Triggering opioid prompt video:", videoUrl);
+
+        this.state.logData.push([
+            "[SYSTEM TIMER] Juan opioid request",
+            this.config.opioidText,
+            this.config.opioidVideoId
+        ]);
+
+        // Optional: show the text in the chat as a Juan/system bubble
+        this.appendMessage(this.config.opioidText, "bot");
+
+        const mainVideoPlaying =
+            this.elements.mainVideo &&
+            !this.elements.mainVideo.paused &&
+            this.elements.mainVideo.ended === false &&
+            this.elements.mainVideo.style.opacity === "1";
+
+        const audioPlaying =
+            this.elements.audioPlayer &&
+            !this.elements.audioPlayer.paused &&
+            this.elements.audioPlayer.ended === false;
+
+        if (!mainVideoPlaying && !audioPlaying && this.isIdleCurrentlyVisible()) {
+            await this.playVideoNow(videoUrl);
+        } else {
+            this.state.queuedVid = videoUrl;
+        }
+    },
+
     async sendMessage() {
         if (this.state.isSending) return;
 
@@ -213,7 +307,7 @@ const App = {
 
         this.state.isSending = true;
 
-        const userBubble = this.appendMessage(text, "user");
+        this.appendMessage(text, "user");
         const botBubble = this.appendMessage("...", "bot");
 
         this.elements.userInput.value = "";
@@ -241,16 +335,14 @@ const App = {
                 ? res.answer
                 : "Sorry, I could not generate a response.";
             const replyId = this.normalizeReplyId(res.answer_index);
-            const similarity = res.similarity;
 
             botBubble.textContent = replyText;
 
             if (this.isIntentVideo(replyId)) {
                 this.state.numUnfocusedQuestions = 0;
 
-                const videoId = String(replyId).padStart(3, "0");
-                const videoURL = this.config.AWS_videoURL_Base + videoId + ".mp4";
-                console.log("Queueing video:", videoURL, "Similarity:", similarity);
+                const videoURL = this.getVideoUrlById(replyId);
+                console.log("Queueing video:", videoURL);
 
                 this.stopAllMedia();
                 this.state.queuedVid = videoURL;
@@ -520,6 +612,7 @@ const App = {
     },
 
     async redirectPage() {
+        this.stopOpioidPromptTimer();
         await this.createLogFile();
 
         const outroIframe = this.elements.outroIframe;
