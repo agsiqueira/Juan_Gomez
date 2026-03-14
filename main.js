@@ -1,442 +1,545 @@
-let numUnfocusedQuestions = 0;
+const App = {
+    state: {
+        numUnfocusedQuestions: 0,
+        logData: [],
+        queuedVid: null,
+        isSending: false,
+        isRecording: false,
+        mediaRecorder: null,
+        audioChunks: [],
+        audioContext: null,
+        analyser: null,
+        sourceNode: null,
+        silenceStart: null,
+        silenceDetectInterval: null,
+        stream: null,
+        sessionId: null
+    },
 
-// 2d array for interaction logging
-let logData = []
+    config: {
+        AWS_videoURL_Base: "https://agsdentistry.s3.us-east-1.amazonaws.com/assets/videos/interaction/",
+        ENDPOINT_URL: "https://verg-api-zone.cise.ufl.edu/",
+        intentMinId: 1,
+        intentMaxId: 150,
+        silenceThreshold: 0.2,
+        silenceDelay: 2000,
+        sttLanguageCode: "en",
+        ttsLanguageCode: "es-US",
+        ttsVoiceName: "es-US-Chirp3-HD-Iapetus"
+    },
 
-// Base for Maria videos (CHANGE THIS IF YOU NEED TO DO DIFFERENT VH)
-const AWS_videoURL_Base = "https://agsdentistry.s3.us-east-1.amazonaws.com/assets/videos/interaction/";
+    elements: {
+        audioPlayer: null,
+        chatBox: null,
+        userInput: null,
+        sendButton: null,
+        micButton: null,
+        mainVideo: null,
+        idleVideo: null,
+        question: null,
+        reply: null,
+        gptAnswer: null,
+        focusPopup: null,
+        outroIframe: null
+    },
 
-// Attaches audio to the video player so that it plays
-let audioPlayer = document.getElementById('myAudio');
+    init() {
+        this.cacheElements();
+        this.initSession();
+        this.bindEvents();
+        this.showMaria();
+        this.setupIdleVideo();
+        setTimeout(() => this.setupSTT(), 1500);
+    },
 
-let queuedVid = null;
+    cacheElements() {
+        this.elements.audioPlayer = document.getElementById("myAudio");
+        this.elements.chatBox = document.getElementById("chat-box");
+        this.elements.userInput = document.getElementById("chatInput");
+        this.elements.sendButton = document.getElementById("send-button");
+        this.elements.micButton = document.getElementById("mic-button");
+        this.elements.mainVideo = document.getElementById("myVideo");
+        this.elements.idleVideo = document.getElementById("idleVideo");
+        this.elements.question = document.getElementById("question");
+        this.elements.reply = document.getElementById("reply");
+        this.elements.gptAnswer = document.getElementById("gptAnswer");
+        this.elements.focusPopup = document.getElementById("focusPopup");
+        this.elements.outroIframe = document.getElementById("outro");
+    },
 
-// API endpoint for chatgpt & google cloud access
-const ENDPOINT_URL = 'https://verg-api-zone.cise.ufl.edu/';
-
-// interaction chat box
-const chatBox = document.getElementById('chat-box');
-
-// user message box input
-const userInput = document.getElementById('chatInput');
-
-// add all event listeners after DOM content is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    // Ensure video appears
-    showMaria();
-
-    const idle = document.getElementById("idleVideo");
-    idle.onended = () => {
-        if (queuedVid) {
-            const url = queuedVid;
-            queuedVid = null;
-            const vid = changeVid(url);
-
-            idle.style.opacity = "0";
-            vid.style.opacity = "1";
-            vid.play();
-
-            vid.onended = () => {
-                switchIdle();
-                // if (sceneCompleted) {
-                //     // scene completed is target scene, so make the next scene the target
-                //     if (curScene === curTargetScene) {
-                //         curTargetScene++;
-                //     }
-                //     // change completed scene number on the popup and display it
-                //     document.getElementById('concludedScene').innerText = `Parabéns, cena ${curScene} concluída`;
-                //     document.getElementById('sceneConclusion').style.display = 'flex';
-                //     sceneCompleted = false;
-                // }
-            }
+    initSession() {
+        let sessionId = sessionStorage.getItem("vh_session_id");
+        if (!sessionId) {
+            sessionId = crypto.randomUUID();
+            sessionStorage.setItem("vh_session_id", sessionId);
         }
-        else {
+        this.state.sessionId = sessionId;
+    },
+
+    bindEvents() {
+        this.elements.sendButton?.addEventListener("click", () => this.sendMessage());
+
+        this.elements.userInput?.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                this.sendMessage();
+            }
+        });
+
+        const buttons = document.querySelectorAll(".disc_category");
+        buttons.forEach(button => {
+            button.addEventListener("click", () => {
+                const sceneContent = button.nextElementSibling;
+                if (!sceneContent) return;
+
+                sceneContent.style.display =
+                    sceneContent.style.display === "block" ? "none" : "block";
+            });
+        });
+
+        document.querySelectorAll(".close-button").forEach(button => {
+            button.addEventListener("click", () => {
+                const popup = button.closest(".popup-overlay");
+                if (popup) popup.style.display = "none";
+            });
+        });
+    },
+
+    setupIdleVideo() {
+        const idle = this.elements.idleVideo;
+        if (!idle) return;
+
+        idle.onended = async () => {
+            if (this.state.queuedVid) {
+                const url = this.state.queuedVid;
+                this.state.queuedVid = null;
+
+                const vid = this.changeVid(url);
+
+                idle.style.opacity = "0";
+                vid.style.opacity = "1";
+
+                try {
+                    await vid.play();
+                } catch (err) {
+                    console.error("Error playing response video:", err);
+                    this.switchIdle();
+                    return;
+                }
+
+                vid.onended = () => {
+                    this.switchIdle();
+                };
+            } else {
+                idle.currentTime = 0;
+                idle.play().catch(err => console.error("Idle replay failed:", err));
+            }
+        };
+    },
+
+    showMaria() {
+        if (this.elements.mainVideo) this.elements.mainVideo.style.display = "block";
+        if (this.elements.idleVideo) this.elements.idleVideo.style.display = "block";
+    },
+
+    switchIdle() {
+        const video = this.elements.mainVideo;
+        const idle = this.elements.idleVideo;
+
+        if (video) {
+            video.pause();
+            video.style.opacity = "0";
+        }
+
+        if (idle) {
             idle.currentTime = 0;
-            idle.play();
+            idle.style.opacity = "1";
+            idle.play().catch(err => console.error("Idle play failed:", err));
         }
-    };
+    },
 
-    // trigger send via button click
-    document.getElementById('send-button').addEventListener('click', sendMessage);
-
-    // trigger send via enter key
-    userInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            sendMessage();
+    stopAllMedia() {
+        if (this.elements.audioPlayer) {
+            this.elements.audioPlayer.pause();
+            this.elements.audioPlayer.currentTime = 0;
+            this.elements.audioPlayer.onended = null;
         }
-    });
 
-    setTimeout(addSTTButton, 1500);
-
-    // add button functionality to each of the scene discovery dropdowns
-    const buttons = document.querySelectorAll('.disc_category');
-    buttons.forEach(button => {
-        button.addEventListener('click', () => {
-            const sceneContent = button.nextElementSibling;
-            if (sceneContent.style.display === 'none' || sceneContent.style.display === '') {
-                sceneContent.style.display = 'block';
-            }
-            else {
-                sceneContent.style.display = 'none';
-            }
-        });
-    });
-
-    // add functionality to popups' close button
-    document.querySelectorAll('.close-button').forEach(button => {
-        button.addEventListener('click', () => {
-            button.closest('.popup-overlay').style.display = 'none';
-        });
-    });
-});
-
-// sends user message to GPT API
-async function sendMessage() {
-    const text = userInput.value.trim();
-    if (text === '') return;
-
-    const newMsgDiv = document.createElement('div');
-    newMsgDiv.textContent = text;
-    newMsgDiv.className = 'df-message-bubble user';
-    chatBox.appendChild(newMsgDiv);
-
-    userInput.value = '';
-
-    const newResDiv = document.createElement('div');
-    newResDiv.textContent = "\t...\t";
-    newResDiv.className = 'df-message-bubble bot';
-    chatBox.appendChild(newResDiv);
-    chatBox.scrollTop = chatBox.scrollHeight;
-
-    console.log("Input to GPT:", text);
-
-    let res;
-    try {
-        const response = await fetch(ENDPOINT_URL + 'JuanGomez/chat_exact', {
-            method: 'POST',
-            headers: { "Content-Type": "application/json", },
-            body: JSON.stringify({ 
-                message: text,
-                session_id: "1"
-            })
-        });
-
-        res = await response.json();
-        console.log("GPT Response: ", res);
-    } catch (error) {
-        console.error("Error calling GPT API:", error);
-        return;
-    }
-
-    const replyText = res.answer;
-    const replyId = res.answer_index;
-    const similarity = res.similarity;
-
-    newResDiv.textContent = replyText;
-
-    // ====================== CHANGE TO replyId !== -1 WHEN OTHER VIDS ARE DONE ============================================================
-    if (replyId >= 1 && replyId <= 150) {
-        // checks if this is the first time intent has been found
-        // if (!allIntents[replyId].found) {
-        //     // marks intent as found
-        //     allIntents[replyId].found = true;
-
-            // new intent related question --> reset counter for unfocused questions
-            numUnfocusedQuestions = 0;
-
-            // curScene = allIntents[replyId].scene;
-            // // increments respective scene and total discovery counts
-            // scenes[curScene].curCount++;
-            // curDiscTotal++;
-
-            // // inserts new HTML div element for newly found discovery into its proper scene
-            // let new_disc_html = "<div>" + "- "+ allIntents[replyId].desc + "</div>";
-            // let htmlID = "scene" + curScene;
-            // document.getElementById(htmlID + "_discs").innerHTML = new_disc_html + 
-            //     document.getElementById(htmlID + "_discs").innerHTML;
-
-            // edit HTML text element for # of discoveries found per scene
-            // const indexOfCount = document.getElementById(htmlID).textContent.indexOf("(");
-            // document.getElementById(htmlID).textContent = document.getElementById(htmlID).textContent.substring(0, indexOfCount) + 
-            //     `(${scenes[curScene].curCount}/${scenes[curScene].totalCount})`;
-
-            // // highlight most recent discovery scene by turning it orange (un-highlight prev)
-            // Object.keys(scenes).forEach(i => {
-            //     if (i == curScene) {
-            //         document.getElementById("scene" + i).parentElement.classList.add("active");
-            //     }
-            //     else {
-            //         document.getElementById("scene" + i).parentElement.classList.remove("active");
-            //     }
-            // });
-
-            // // ensure discovery's respective scene content is displayed (even if was hidden previously by button click)
-            // document.getElementById(htmlID).parentElement.nextElementSibling.style.display = 'block';
-
-            // // update total discovery count
-            // document.getElementById("discoveries").querySelector("h1").textContent = `Discoveries (${curDiscTotal}/${goalDiscTotal})`;
-
-            // // checks if scene is completed
-            // if (scenes[curScene].curCount === scenes[curScene].totalCount) {
-            //     // mark scene as completed so that pop up works
-            //     sceneCompleted = true;
-            // }
-        // }
-        // else {  // intent related question already asked previously
-        //     numUnfocusedQuestions++;
-        // }
-
-        const videoId = ("0").repeat(3 - String(replyId).length) + replyId;
-        const videoURL = AWS_videoURL_Base + videoId + ".mp4";
-        console.log("Change to this: " + videoURL);
-        queuedVid = videoURL;
-    }
-    else {  // question not intent related
-        await GenerateTTS(replyText);
-
-        // add question and reply texts to popup and show
-        document.getElementById('question').innerText = text;
-        document.getElementById('reply').innerText = replyText;
-        document.getElementById('gptAnswer').style.display = 'flex';
-
-        audioPlayer.play();
-        audioPlayer.onended = () => {
-            switchIdle();
-        };
-
-        numUnfocusedQuestions++;
-    }
-
-    logData.push(
-        [text, replyText, replyId]
-    );
-
-    console.log("Num Unfocused Questions: ", numUnfocusedQuestions);
-    if (numUnfocusedQuestions >= 3) {
-        unfocusedPopUp();
-    }
-}
-
-function showMaria() {
-    document.getElementById("myVideo").style.display = "block";
-    document.getElementById("idleVideo").style.display = "block";
-}
-
-function switchIdle() {
-    const video = document.getElementById("myVideo");
-    const idle = document.getElementById("idleVideo");
-
-    video.pause();
-    video.style.opacity = "0";
-
-    idle.currentTime = 0;
-    idle.style.opacity = "1";
-    idle.play();
-}
-
-//Add Parameter to Change Video Based on Intent Name
-function changeVid(URL) {
-    const vid = document.getElementById("myVideo");
-    
-    vid.src = URL;
-    vid.load();
-    vid.muted = false;
-    vid.currentTime = 0;
-
-    return vid;
-}
-
-function unfocusedPopUp() {
-    // let objList = "";
-    // // loop through each discovery intent of the current scene and add to html list
-    // Object.keys(allIntents).forEach(key => {
-    //     const intent = allIntents[key];
-    //     if (intent.scene === curTargetScene) {
-    //         objList += "<p>" + "- " + intent.desc + "</p>";
-    //     }
-    // });
-    // // add list to popup and show it
-    // document.getElementById("sceneObjectives").innerHTML = objList
-    document.getElementById('focusPopup').style.display = 'flex';
-}
-
-// Generates Text-To-Speech Audio
-async function GenerateTTS(gptResponse){
-    gptResponse = gptResponse.replace(/\([^)]*\)/g, "")
-    try{
-        const payload = {
-            text: gptResponse,
-            language_code: "es-US",
-            voice_name: "es-US-Chirp3-HD-Iapetus"
-        };
-
-        // get Google Cloud Speech-to-Text API response from endpoint
-        const response = await fetch(ENDPOINT_URL + 'api/googlecloudtts', {
-            headers: { "Content-Type": "application/json" },
-            method: 'POST',
-            body: JSON.stringify(payload)
-        });
-
-        // creates audio blob and attaches to client's audio player
-        const audioBLob = await response.blob();
-        const audioUrl = URL.createObjectURL(audioBLob);
-        audioPlayer.src = audioUrl;
-    }
-    catch (error) {
-        console.error("Error in TTS:", error);
-        return "";
-    }
-}
-
-// calculates root mean square of audio frequencies to determine how loud the current microphone input is
-function getRMS(arr) {
-    let sumSquares = 0;
-    for (const val of arr) {
-        sumSquares += val*val;
-    }
-    return Math.sqrt(sumSquares / arr.length) / 255;
-}
-
-// adds speech to text functionality
-function addSTTButton() {
-    const micButton = document.getElementById('mic-button');
-    
-    let mediaRecorder;
-    let audioChunks = [];
-    let isRecording = false;
-
-    let audioContext;
-    let analyser;
-    let sourceNode;
-    let silenceStart = null;
-    let silenceDetectInterval;
-
-    const silenceThreshold = 0.2;
-    const silenceDelay = 2000;
-
-    // button can only start recording (no clickable stop)
-    micButton.addEventListener('click', () => {
-        if (!isRecording) {
-            startRecording();
+        if (this.elements.mainVideo) {
+            this.elements.mainVideo.pause();
+            this.elements.mainVideo.currentTime = 0;
         }
-    });
+    },
 
-    async function startRecording() {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream);
-    
-        audioContext = new AudioContext();
-        analyser = audioContext.createAnalyser();
-        sourceNode = audioContext.createMediaStreamSource(stream);
-        sourceNode.connect(analyser);
-        analyser.fftSize = 512;
+    changeVid(url) {
+        const vid = this.elements.mainVideo;
+        if (!vid) return null;
 
-        mediaRecorder.ondataavailable = (e) => {
-            if (e.data.size > 0) audioChunks.push(e.data);
-        };
+        vid.src = url;
+        vid.load();
+        vid.muted = false;
+        vid.currentTime = 0;
+        return vid;
+    },
 
-        mediaRecorder.onstop = async () => {
-            const audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType });
+    appendMessage(text, sender) {
+        const div = document.createElement("div");
+        div.textContent = text;
+        div.className = `df-message-bubble ${sender}`;
+        this.elements.chatBox?.appendChild(div);
+        this.scrollChatToBottom();
+        return div;
+    },
 
-            audioChunks = [];
+    scrollChatToBottom() {
+        const chatBox = this.elements.chatBox;
+        if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
+    },
 
-            let extension = audioBlob.type.split('/')[1].split(';')[0];
+    normalizeReplyId(raw) {
+        const id = Number(raw);
+        return Number.isInteger(id) ? id : -1;
+    },
 
-            const formData = new FormData();
-            formData.append('audio', audioBlob, `recording.${extension}`);
-            formData.append('language_code', 'en');
+    isIntentVideo(replyId) {
+        return replyId >= this.config.intentMinId && replyId <= this.config.intentMaxId;
+    },
 
-            const response = await fetch(ENDPOINT_URL + 'api/googlecloudstt', {
-                method: 'POST',
-                body: formData,
+    async sendMessage() {
+        if (this.state.isSending) return;
+
+        const text = this.elements.userInput?.value.trim();
+        if (!text) return;
+
+        this.state.isSending = true;
+
+        const userBubble = this.appendMessage(text, "user");
+        const botBubble = this.appendMessage("...", "bot");
+
+        this.elements.userInput.value = "";
+
+        console.log("Input to GPT:", text);
+
+        try {
+            const response = await fetch(this.config.ENDPOINT_URL + "JuanGomez/chat_exact", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    message: text,
+                    session_id: this.state.sessionId
+                })
             });
 
-            const result = await response.json();
-            console.log('Server response: ', result);
-
-            userInput.value = result.transcript;
-            userInput.dispatchEvent(new Event('input', { bubbles: true }));
-            sendMessage();
-
-            clearInterval(silenceDetectInterval);
-            silenceDetectInterval = null;
-
-            if (audioContext) {
-                audioContext.close();
-                audioContext = null;
-                analyser = null;
-                sourceNode = null;
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
             }
+
+            const res = await response.json();
+            console.log("GPT Response:", res);
+
+            const replyText = typeof res.answer === "string" && res.answer.trim()
+                ? res.answer
+                : "Sorry, I could not generate a response.";
+            const replyId = this.normalizeReplyId(res.answer_index);
+            const similarity = res.similarity;
+
+            botBubble.textContent = replyText;
+
+            if (this.isIntentVideo(replyId)) {
+                this.state.numUnfocusedQuestions = 0;
+
+                const videoId = String(replyId).padStart(3, "0");
+                const videoURL = this.config.AWS_videoURL_Base + videoId + ".mp4";
+                console.log("Queueing video:", videoURL, "Similarity:", similarity);
+
+                this.stopAllMedia();
+                this.state.queuedVid = videoURL;
+            } else {
+                await this.generateTTS(replyText);
+
+                if (this.elements.question) this.elements.question.innerText = text;
+                if (this.elements.reply) this.elements.reply.innerText = replyText;
+                if (this.elements.gptAnswer) this.elements.gptAnswer.style.display = "flex";
+
+                await this.playAudioReply();
+                this.state.numUnfocusedQuestions++;
+            }
+
+            this.state.logData.push([text, replyText, replyId]);
+
+            console.log("Num Unfocused Questions:", this.state.numUnfocusedQuestions);
+            if (this.state.numUnfocusedQuestions >= 3) {
+                this.unfocusedPopUp();
+            }
+
+        } catch (error) {
+            console.error("Error calling GPT API:", error);
+            botBubble.textContent = "Sorry, there was a connection error. Please try again.";
+        } finally {
+            this.state.isSending = false;
+        }
+    },
+
+    unfocusedPopUp() {
+        if (this.elements.focusPopup) {
+            this.elements.focusPopup.style.display = "flex";
+        }
+    },
+
+    async generateTTS(gptResponse) {
+        const cleanedResponse = String(gptResponse || "").replace(/\([^)]*\)/g, "").trim();
+
+        try {
+            const payload = {
+                text: cleanedResponse,
+                language_code: this.config.ttsLanguageCode,
+                voice_name: this.config.ttsVoiceName
+            };
+
+            const response = await fetch(this.config.ENDPOINT_URL + "api/googlecloudtts", {
+                headers: { "Content-Type": "application/json" },
+                method: "POST",
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`TTS HTTP ${response.status}`);
+            }
+
+            const audioBlob = await response.blob();
+            const audioUrl = URL.createObjectURL(audioBlob);
+            this.elements.audioPlayer.src = audioUrl;
+        } catch (error) {
+            console.error("Error in TTS:", error);
+            throw error;
+        }
+    },
+
+    playAudioReply() {
+        return new Promise((resolve, reject) => {
+            const audioPlayer = this.elements.audioPlayer;
+            if (!audioPlayer) {
+                resolve();
+                return;
+            }
+
+            audioPlayer.onended = () => {
+                this.switchIdle();
+                resolve();
+            };
+
+            audioPlayer.play().catch(err => {
+                console.error("Audio play failed:", err);
+                this.switchIdle();
+                reject(err);
+            });
+        });
+    },
+
+    getRMS(arr) {
+        let sumSquares = 0;
+        for (const val of arr) {
+            sumSquares += val * val;
+        }
+        return Math.sqrt(sumSquares / arr.length) / 255;
+    },
+
+    setupSTT() {
+        const micButton = this.elements.micButton;
+        if (!micButton || micButton.dataset.initialized === "true") return;
+
+        micButton.dataset.initialized = "true";
+
+        micButton.addEventListener("click", () => {
+            if (!this.state.isRecording) {
+                this.startRecording();
+            }
+        });
+    },
+
+    async startRecording() {
+        try {
+            this.state.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            this.state.mediaRecorder = new MediaRecorder(this.state.stream);
+            this.state.audioChunks = [];
+
+            this.state.audioContext = new AudioContext();
+            this.state.analyser = this.state.audioContext.createAnalyser();
+            this.state.sourceNode = this.state.audioContext.createMediaStreamSource(this.state.stream);
+            this.state.sourceNode.connect(this.state.analyser);
+            this.state.analyser.fftSize = 512;
+
+            this.state.mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) {
+                    this.state.audioChunks.push(e.data);
+                }
+            };
+
+            this.state.mediaRecorder.onstop = async () => {
+                try {
+                    const mimeType = this.state.mediaRecorder?.mimeType || "audio/webm";
+                    const audioBlob = new Blob(this.state.audioChunks, { type: mimeType });
+                    this.state.audioChunks = [];
+
+                    const extension = (audioBlob.type.split("/")[1] || "webm").split(";")[0];
+
+                    const formData = new FormData();
+                    formData.append("audio", audioBlob, `recording.${extension}`);
+                    formData.append("language_code", this.config.sttLanguageCode);
+
+                    const response = await fetch(this.config.ENDPOINT_URL + "api/googlecloudstt", {
+                        method: "POST",
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`STT HTTP ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    console.log("Server response:", result);
+
+                    const transcript = (result.transcript || "").trim();
+                    if (!transcript) {
+                        console.warn("No transcript returned.");
+                        return;
+                    }
+
+                    this.elements.userInput.value = transcript;
+                    this.elements.userInput.dispatchEvent(new Event("input", { bubbles: true }));
+                    await this.sendMessage();
+
+                } catch (error) {
+                    console.error("Error in STT:", error);
+                } finally {
+                    this.cleanupRecordingResources();
+                }
+            };
+
+            this.state.mediaRecorder.start();
+            this.state.isRecording = true;
+
+            if (this.elements.micButton) {
+                this.elements.micButton.innerHTML = "⏳";
+                this.elements.micButton.title = "Gravando...";
+            }
+
+            this.state.silenceStart = null;
+            this.state.silenceDetectInterval = setInterval(() => {
+                if (!this.state.analyser) return;
+
+                const arr = new Uint8Array(this.state.analyser.frequencyBinCount);
+                this.state.analyser.getByteFrequencyData(arr);
+
+                const rms = this.getRMS(arr);
+
+                if (rms < this.config.silenceThreshold) {
+                    if (!this.state.silenceStart) {
+                        this.state.silenceStart = Date.now();
+                    } else if (Date.now() - this.state.silenceStart > this.config.silenceDelay) {
+                        this.stopRecording();
+                    }
+                } else {
+                    this.state.silenceStart = null;
+                }
+            }, 100);
+
+        } catch (error) {
+            console.error("Could not start recording:", error);
+            this.cleanupRecordingResources();
+        }
+    },
+
+    stopRecording() {
+        if (this.state.mediaRecorder && this.state.mediaRecorder.state === "recording") {
+            this.state.mediaRecorder.stop();
+        }
+        this.state.isRecording = false;
+
+        if (this.elements.micButton) {
+            this.elements.micButton.innerHTML = "🎤";
+            this.elements.micButton.title = "Clique para falar";
+        }
+    },
+
+    cleanupRecordingResources() {
+        if (this.state.silenceDetectInterval) {
+            clearInterval(this.state.silenceDetectInterval);
+            this.state.silenceDetectInterval = null;
+        }
+
+        if (this.state.audioContext) {
+            this.state.audioContext.close().catch(() => {});
+            this.state.audioContext = null;
+        }
+
+        this.state.analyser = null;
+        this.state.sourceNode = null;
+        this.state.silenceStart = null;
+
+        if (this.state.stream) {
+            this.state.stream.getTracks().forEach(track => track.stop());
+            this.state.stream = null;
+        }
+
+        this.state.mediaRecorder = null;
+        this.state.isRecording = false;
+
+        if (this.elements.micButton) {
+            this.elements.micButton.innerHTML = "🎤";
+            this.elements.micButton.title = "Clique para falar";
+        }
+    },
+
+    async createLogFile() {
+        const formUrl = "https://docs.google.com/forms/d/e/1FAIpQLSfPxO3FT8BRMBOmWop4U7ljOiOE5lnTIb3nqTPvoFwcKqJxxQ/formResponse";
+        const fieldIds = {
+            question: "entry.413257006",
+            answer: "entry.253578126",
+            intentId: "entry.329507193"
         };
 
-        mediaRecorder.start();
-        isRecording = true;
-        micButton.innerHTML = '⏳';
-        micButton.title = 'Gravando...'
+        for (const row of this.state.logData) {
+            try {
+                const formData = new FormData();
+                formData.append(fieldIds.question, row[0]);
+                formData.append(fieldIds.answer, row[1]);
+                formData.append(fieldIds.intentId, row[2]);
 
-        silenceStart = null;
-        silenceDetectInterval = setInterval(() => {
-            const arr = new Uint8Array(analyser.frequencyBinCount);
-            analyser.getByteFrequencyData(arr);
+                await fetch(formUrl, {
+                    method: "POST",
+                    body: formData,
+                    mode: "no-cors"
+                });
 
-            const rms = getRMS(arr);
-
-            if (rms < silenceThreshold) {
-                if (!silenceStart)
-                    silenceStart = Date.now();
-                else if (Date.now() - silenceStart > silenceDelay) {
-                    stopRecording();
-                }
+                console.log("Log sent:", row);
+            } catch (error) {
+                console.error("Failed to send log row:", row, error);
             }
-            else {
-                silenceStart = null;
-            }
-        }, 100);
-    }
-
-    function stopRecording() {
-        if (mediaRecorder && mediaRecorder.state === 'recording') {
-            mediaRecorder.stop();
         }
-        isRecording = false;
-        micButton.innerHTML = '🎤';
-        micButton.title = 'Clique para falar';
-    } 
-}
+    },
 
-// Creates the log file and downloads it locally on user's system
-async function CreateLogFile() {
-    const formUrl = "https://docs.google.com/forms/d/e/1FAIpQLSfPxO3FT8BRMBOmWop4U7ljOiOE5lnTIb3nqTPvoFwcKqJxxQ/formResponse";
-    const fieldIds = {
-        question: "entry.413257006",
-        answer: "entry.253578126",
-        intentId: "entry.329507193"
-    };
+    async redirectPage() {
+        await this.createLogFile();
 
-    for (const row of logData) {
-        const formData = new FormData();
-        formData.append(fieldIds.question, row[0]);
-        formData.append(fieldIds.answer, row[1]);
-        formData.append(fieldIds.intentId, row[2]);
+        const outroIframe = this.elements.outroIframe;
+        if (!outroIframe) return;
 
-        await fetch(formUrl, {
-            method: "POST",
-            body: formData,
-            mode: "no-cors"
-        });
+        outroIframe.style.display = "block";
 
-        console.log("Log sent: ", row)
+        try {
+            const video7 = outroIframe.contentWindow.document.getElementById("myVideo7");
+            if (video7) {
+                video7.style.display = "block";
+                video7.currentTime = 0;
+                await video7.play();
+            }
+        } catch (err) {
+            console.log("Video play failed:", err);
+        }
     }
-}
+};
 
-function redirectPage() {
-    CreateLogFile();
-
-    const outroIframe = document.getElementById('outro'); 
-    outroIframe.style.display = 'block';
-
-    const video7 = outroIframe.contentWindow.document.getElementById('myVideo7');
-    video7.style.display = 'block'
-    video7.currentTime = 0;
-    video7.play().catch(err => console.log('Video play failed:', err));
-}
+document.addEventListener("DOMContentLoaded", () => {
+    App.init();
+});
