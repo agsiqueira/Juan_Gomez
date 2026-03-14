@@ -16,8 +16,7 @@ const App = {
         sessionId: null,
         opioidPromptIntervalId: null,
         interactionStartTime: null,
-        teethInspectionFound: false,
-        totalDiscoveriesFound: 0
+        foundDiscoveries: new Set()
     },
 
     config: {
@@ -33,7 +32,8 @@ const App = {
         opioidPromptIntervalMs: 3 * 60 * 1000,
         opioidVideoId: 427,
         opioidText: "I'm in pain. Don't bother with the regular stuff; it never works. I need something much stronger. Can I have percocet?",
-        teethReactionVideoId: 428
+        teethReactionVideoId: 428,
+        totalDiscoveriesTarget: 15
     },
 
     elements: {
@@ -51,10 +51,17 @@ const App = {
         outroIframe: null
     },
 
-    init() {
+    discoveryDefinitions: {},
+    answerIndexToDiscovery: {},
+    sceneConfig: {},
+
+    async init() {
         this.cacheElements();
         this.initSession();
         this.state.interactionStartTime = Date.now();
+
+        await this.loadDiscoveryMap();
+
         this.bindEvents();
         this.showMaria();
         this.setupIdleVideo();
@@ -84,6 +91,24 @@ const App = {
             sessionStorage.setItem("vh_session_id", sessionId);
         }
         this.state.sessionId = sessionId;
+    },
+
+    async loadDiscoveryMap() {
+        const response = await fetch("./discoveryMap.json");
+
+        if (!response.ok) {
+            throw new Error(`Failed to load discoveryMap.json: HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        this.discoveryDefinitions = data.discoveryDefinitions || {};
+        this.answerIndexToDiscovery = data.answerIndexToDiscovery || {};
+        this.sceneConfig = data.sceneConfig || {};
+
+        if (data.config?.totalDiscoveriesTarget) {
+            this.config.totalDiscoveriesTarget = data.config.totalDiscoveriesTarget;
+        }
     },
 
     bindEvents() {
@@ -124,7 +149,7 @@ const App = {
                 if (!idle || !vid) {
                     const popup = document.getElementById("teethPopup");
                     if (popup) popup.style.display = "flex";
-                    this.registerTeethDiscovery();
+                    this.registerDiscovery("pain_tooth_exam");
                     return;
                 }
 
@@ -141,7 +166,7 @@ const App = {
                     this.switchIdle();
                     const popup = document.getElementById("teethPopup");
                     if (popup) popup.style.display = "flex";
-                    this.registerTeethDiscovery();
+                    this.registerDiscovery("pain_tooth_exam");
                     return;
                 }
 
@@ -151,7 +176,7 @@ const App = {
                     const popup = document.getElementById("teethPopup");
                     if (popup) popup.style.display = "flex";
 
-                    this.registerTeethDiscovery();
+                    this.registerDiscovery("pain_tooth_exam");
                 };
             });
         }
@@ -167,30 +192,66 @@ const App = {
     updateDiscoveriesHeader() {
         const header = document.querySelector("#discoveries .title-wrapper");
         if (header) {
-            header.textContent = `Discoveries (${this.state.totalDiscoveriesFound}/15)`;
+            header.textContent = `Discoveries (${this.state.foundDiscoveries.size}/${this.config.totalDiscoveriesTarget})`;
         }
     },
 
-    registerTeethDiscovery() {
-        if (this.state.teethInspectionFound) return;
+    getSceneDiscoveryCount(sceneNumber) {
+        let count = 0;
+        for (const discoveryId of this.state.foundDiscoveries) {
+            const discovery = this.discoveryDefinitions[discoveryId];
+            if (discovery && discovery.scene === sceneNumber) {
+                count += 1;
+            }
+        }
+        return count;
+    },
 
-        this.state.teethInspectionFound = true;
-        this.state.totalDiscoveriesFound += 1;
+    registerDiscovery(discoveryId) {
+        if (!discoveryId) return;
+        if (this.state.foundDiscoveries.has(discoveryId)) return;
 
-        const sceneEl = document.getElementById("scene2");
-        const discsEl = document.getElementById("scene2_discs");
+        const discovery = this.discoveryDefinitions[discoveryId];
+        if (!discovery) return;
 
-        if (discsEl) {
+        this.state.foundDiscoveries.add(discoveryId);
+
+        const sceneInfo = this.sceneConfig[String(discovery.scene)] || this.sceneConfig[discovery.scene];
+        if (!sceneInfo) return;
+
+        const listEl = document.getElementById(sceneInfo.listId);
+        const headerEl = document.getElementById(sceneInfo.headerId);
+
+        if (listEl) {
             const newDisc = document.createElement("div");
-            newDisc.textContent = "- Tooth avulsion observed";
-            discsEl.prepend(newDisc);
+            newDisc.textContent = `- ${discovery.desc}`;
+            listEl.prepend(newDisc);
         }
 
-        if (sceneEl) {
-            sceneEl.textContent = "Painful (1/4)";
+        const sceneCount = this.getSceneDiscoveryCount(discovery.scene);
+
+        if (headerEl) {
+            headerEl.textContent = `${sceneInfo.category} (${sceneCount}/${sceneInfo.total})`;
         }
 
         this.updateDiscoveriesHeader();
+
+        const sceneButton = headerEl?.parentElement;
+        if (sceneButton) {
+            sceneButton.classList.add("active");
+        }
+
+        const sceneContent = sceneButton?.nextElementSibling;
+        if (sceneContent) {
+            sceneContent.style.display = "block";
+        }
+    },
+
+    maybeRegisterDiscoveryFromAnswer(answerIndex) {
+        const discoveryId = this.answerIndexToDiscovery[String(answerIndex)] ?? this.answerIndexToDiscovery[answerIndex];
+        if (discoveryId) {
+            this.registerDiscovery(discoveryId);
+        }
     },
 
     setupIdleVideo() {
@@ -378,6 +439,7 @@ const App = {
         ]);
 
         this.appendMessage(this.config.opioidText, "bot");
+        this.registerDiscovery("opioid_requests_percocet");
 
         const mainVideoPlaying =
             this.elements.mainVideo &&
@@ -435,6 +497,8 @@ const App = {
             const replyId = this.normalizeReplyId(res.answer_index);
 
             botBubble.textContent = this.formatChatMessageWithTime(replyText);
+
+            this.maybeRegisterDiscoveryFromAnswer(replyId);
 
             if (this.isIntentVideo(replyId)) {
                 this.state.numUnfocusedQuestions = 0;
@@ -728,6 +792,10 @@ const App = {
     }
 };
 
-document.addEventListener("DOMContentLoaded", () => {
-    App.init();
+document.addEventListener("DOMContentLoaded", async () => {
+    try {
+        await App.init();
+    } catch (error) {
+        console.error("Failed to initialize app:", error);
+    }
 });
