@@ -14,7 +14,8 @@ const App = {
         silenceDetectInterval: null,
         stream: null,
         sessionId: null,
-        opioidPromptIntervalId: null
+        opioidPromptIntervalId: null,
+        interactionStartTime: null
     },
 
     config: {
@@ -50,6 +51,7 @@ const App = {
     init() {
         this.cacheElements();
         this.initSession();
+        this.state.interactionStartTime = Date.now();
         this.bindEvents();
         this.showMaria();
         this.setupIdleVideo();
@@ -187,9 +189,25 @@ const App = {
         return vid;
     },
 
+    getElapsedTimeLabel() {
+        if (!this.state.interactionStartTime) return "[00:00]";
+
+        const elapsedMs = Date.now() - this.state.interactionStartTime;
+        const totalSeconds = Math.floor(elapsedMs / 1000);
+
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+
+        return `[${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}]`;
+    },
+
+    formatChatMessageWithTime(text) {
+        return `${this.getElapsedTimeLabel()} ${text}`;
+    },
+
     appendMessage(text, sender) {
         const div = document.createElement("div");
-        div.textContent = text;
+        div.textContent = this.formatChatMessageWithTime(text);
         div.className = `df-message-bubble ${sender}`;
         this.elements.chatBox?.appendChild(div);
         this.scrollChatToBottom();
@@ -278,7 +296,6 @@ const App = {
             this.config.opioidVideoId
         ]);
 
-        // Optional: show the text in the chat as a Juan/system bubble
         this.appendMessage(this.config.opioidText, "bot");
 
         const mainVideoPlaying =
@@ -336,7 +353,7 @@ const App = {
                 : "Sorry, I could not generate a response.";
             const replyId = this.normalizeReplyId(res.answer_index);
 
-            botBubble.textContent = replyText;
+            botBubble.textContent = this.formatChatMessageWithTime(replyText);
 
             if (this.isIntentVideo(replyId)) {
                 this.state.numUnfocusedQuestions = 0;
@@ -366,7 +383,7 @@ const App = {
 
         } catch (error) {
             console.error("Error calling GPT API:", error);
-            botBubble.textContent = "Sorry, there was a connection error. Please try again.";
+            botBubble.textContent = this.formatChatMessageWithTime("Sorry, there was a connection error. Please try again.");
         } finally {
             this.state.isSending = false;
         }
