@@ -415,18 +415,11 @@ const App = {
 
         const listEl = document.getElementById(sceneInfo.listId);
         const headerEl = document.getElementById(sceneInfo.headerId);
-        const discoveriesList = document.getElementById("dList");
-        const discoveriesTitle = document.querySelector("#discoveries .title-wrapper");
 
         if (listEl) {
             const newDisc = document.createElement("div");
-            newDisc.textContent = discovery.desc;
-            newDisc.className = "discovery-item new-discovery";
+            newDisc.textContent = `- ${discovery.desc}`;
             listEl.prepend(newDisc);
-
-            window.setTimeout(() => {
-                newDisc.classList.remove("new-discovery");
-            }, 2000);
         }
 
         const sceneCount = this.getSceneDiscoveryCount(discovery.scene);
@@ -440,33 +433,11 @@ const App = {
         const sceneButton = headerEl?.parentElement;
         if (sceneButton) {
             sceneButton.classList.add("active");
-            sceneButton.classList.remove("discovery-flash");
-            void sceneButton.offsetWidth;
-            sceneButton.classList.add("discovery-flash");
         }
 
         const sceneContent = sceneButton?.nextElementSibling;
         if (sceneContent) {
             sceneContent.style.display = "block";
-            sceneContent.classList.remove("discovery-flash");
-            void sceneContent.offsetWidth;
-            sceneContent.classList.add("discovery-flash");
-        }
-
-        if (discoveriesList) {
-            discoveriesList.classList.remove("discovery-flash");
-            void discoveriesList.offsetWidth;
-            discoveriesList.classList.add("discovery-flash");
-        }
-
-        if (discoveriesTitle) {
-            discoveriesTitle.classList.remove("discovery-flash");
-            void discoveriesTitle.offsetWidth;
-            discoveriesTitle.classList.add("discovery-flash");
-        }
-
-        if (listEl) {
-            listEl.scrollTop = 0;
         }
     },
 
