@@ -67,13 +67,11 @@ body {
   margin: 1px;
 }
 
-/* ----------------------------- */
 /* PATIENT INFORMATION PANEL */
-/* ----------------------------- */
 
 #prog {
   position: fixed;
-  top: 80px;   /* moved down */
+  top: 80px;
   left: 20px;
 
   width: 420px;
@@ -92,9 +90,7 @@ body {
   overflow-y: auto;
 }
 
-/* ----------------------------- */
 /* DISCOVERIES PANEL */
-/* ----------------------------- */
 
 #discoveries {
   position: fixed;
@@ -121,9 +117,7 @@ body {
   padding: 10px;
 }
 
-/* ----------------------------- */
 /* VIDEO */
-/* ----------------------------- */
 
 #myVideo {
   z-index: -2;
@@ -147,9 +141,7 @@ body {
   object-fit: cover;
 }
 
-/* ----------------------------- */
 /* DISCOVERY BUTTONS */
-/* ----------------------------- */
 
 .disc_category {
   background-color: #42a5f5;
@@ -170,9 +162,7 @@ body {
   background-color: #f1f1f1;
 }
 
-/* ----------------------------- */
 /* POPUPS */
-/* ----------------------------- */
 
 .popup-overlay {
   position: fixed;
@@ -213,13 +203,11 @@ body {
   cursor: pointer;
 }
 
-/* ----------------------------- */
 /* CHAT */
-/* ----------------------------- */
 
 .chat-container {
   position: fixed;
-  top: 80px;   /* moved down to stay aligned with Patient Information */
+  top: 130px;
   right: 20px;
 
   width: 300px;
@@ -288,9 +276,7 @@ body {
   background: #0b57d0;
 }
 
-/* ----------------------------- */
 /* MESSAGE BUBBLES */
-/* ----------------------------- */
 
 .chat-list {
   display: flex;
@@ -320,9 +306,7 @@ body {
   align-self: flex-start;
 }
 
-/* ----------------------------- */
 /* TITLES */
-/* ----------------------------- */
 
 .title-wrapper {
   align-items: center;
