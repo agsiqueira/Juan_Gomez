@@ -164,6 +164,21 @@
     </div>
   </div>
 
+
+  <div id="notesPopup" class="popup-overlay" style="display:none;">
+    <div class="popup-window notes-popup-window">
+      <button id="notesPopupClose" class="close-button">&times;</button>
+      <h2>Session Notes</h2>
+      <p class="notes-helper-text">Type any observations here. Your notes will stay available when you reopen this window and will be included in the generated report.</p>
+      <textarea
+        id="notesTextarea"
+        class="notes-textarea"
+        placeholder="Type your notes here..."
+        aria-label="Session notes"
+      ></textarea>
+    </div>
+  </div>
+
   <div class="chat-container">
     <h1 class="title-wrapper">Juan Gomez</h1>
 
@@ -180,6 +195,7 @@
     <div class="control-panel">
       <div class="top-buttons">
         <button id="inspectTeethBtn" class="rounded-btn">Inspect Teeth</button>
+        <button id="notesBtn" class="rounded-btn note-trigger" title="Take notes">📝 Notes</button>
         <button id="downloadReportBtn" class="rounded-btn">Download Report</button>
       </div>
 

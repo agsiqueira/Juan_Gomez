@@ -505,3 +505,64 @@ body::after {
     transform: translateY(0);
   }
 }
+
+
+/* NOTES POPUP */
+
+.notes-popup-window {
+  width: min(720px, calc(100vw - 40px));
+  max-width: 720px;
+  text-align: left;
+}
+
+.notes-helper-text {
+  margin-top: 8px;
+  margin-bottom: 14px;
+  color: #4a4a4a;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.notes-textarea {
+  width: 100%;
+  min-height: 320px;
+  max-height: 60vh;
+  resize: vertical;
+  box-sizing: border-box;
+  padding: 14px;
+  border: 1px solid #cfd8dc;
+  border-radius: 8px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #1f1f1f;
+  background: #ffffff;
+  outline: none;
+}
+
+.notes-textarea:focus {
+  border-color: #42A5F5;
+  box-shadow: 0 0 0 3px rgba(66,165,245,0.18);
+}
+
+.note-trigger.has-notes {
+  background-color: #0b57d0;
+}
+
+.note-trigger.has-notes::after {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-left: 8px;
+  border-radius: 50%;
+  background: #ffd54f;
+  vertical-align: middle;
+}
+
+@media (max-width: 980px) {
+  .notes-textarea {
+    min-height: 240px;
+    max-height: 50vh;
+  }
+}

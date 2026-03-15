@@ -18,7 +18,8 @@ const App = {
         interactionStartTime: null,
         foundDiscoveries: new Set(),
         sleepTimeoutId: null,
-        isSleeping: false
+        isSleeping: false,
+        notesStorageKey: "juan_gomez_session_notes"
     },
 
     config: {
@@ -57,7 +58,10 @@ const App = {
         focusPopup: null,
         outroIframe: null,
         patientInfoBox: null,
-        discoveriesHeader: null
+        discoveriesHeader: null,
+        notesButton: null,
+        notesPopup: null,
+        notesTextarea: null
     },
 
     discoveryDefinitions: {},
@@ -71,7 +75,9 @@ const App = {
 
         await this.loadDiscoveryMap();
 
+        this.loadSavedNotes();
         this.bindEvents();
+        this.updateNotesButtonState();
         this.showMaria();
         this.setupIdleVideo();
         this.startOpioidPromptTimer();
@@ -94,6 +100,9 @@ const App = {
         this.elements.outroIframe = document.getElementById("outro");
         this.elements.patientInfoBox = document.querySelector("#prog .alert.alert-info");
         this.elements.discoveriesHeader = document.querySelector("#discoveries .title-wrapper");
+        this.elements.notesButton = document.getElementById("notesBtn");
+        this.elements.notesPopup = document.getElementById("notesPopup");
+        this.elements.notesTextarea = document.getElementById("notesTextarea");
     },
 
     initSession() {
@@ -375,12 +384,81 @@ const App = {
             });
         }
 
+        this.elements.notesButton?.addEventListener("click", async () => {
+            await this.markUserInteraction();
+            this.openNotesPopup();
+        });
+
+        this.elements.notesTextarea?.addEventListener("input", () => {
+            this.saveNotes();
+            this.updateNotesButtonState();
+        });
+
         document.querySelectorAll(".close-button").forEach((button) => {
             button.addEventListener("click", () => {
                 const popup = button.closest(".popup-overlay");
-                if (popup) popup.style.display = "none";
+                if (!popup) return;
+
+                if (popup.id === "notesPopup") {
+                    this.closeNotesPopup();
+                    return;
+                }
+
+                popup.style.display = "none";
             });
         });
+    },
+
+    getNotesText() {
+        return (this.elements.notesTextarea?.value || "").trim();
+    },
+
+    loadSavedNotes() {
+        try {
+            const savedNotes = localStorage.getItem(this.state.notesStorageKey) || "";
+            if (this.elements.notesTextarea) {
+                this.elements.notesTextarea.value = savedNotes;
+            }
+        } catch (error) {
+            console.error("Could not load saved notes:", error);
+        }
+    },
+
+    saveNotes() {
+        try {
+            const notes = this.elements.notesTextarea?.value || "";
+            localStorage.setItem(this.state.notesStorageKey, notes);
+        } catch (error) {
+            console.error("Could not save notes:", error);
+        }
+    },
+
+    updateNotesButtonState() {
+        const hasNotes = this.getNotesText().length > 0;
+        if (this.elements.notesButton) {
+            this.elements.notesButton.classList.toggle("has-notes", hasNotes);
+        }
+    },
+
+    openNotesPopup() {
+        if (this.elements.notesPopup) {
+            this.elements.notesPopup.style.display = "flex";
+        }
+
+        if (this.elements.notesTextarea) {
+            this.elements.notesTextarea.focus();
+            const end = this.elements.notesTextarea.value.length;
+            this.elements.notesTextarea.setSelectionRange(end, end);
+        }
+    },
+
+    closeNotesPopup() {
+        this.saveNotes();
+        this.updateNotesButtonState();
+
+        if (this.elements.notesPopup) {
+            this.elements.notesPopup.style.display = "none";
+        }
     },
 
     updateDiscoveriesHeader() {
@@ -1188,6 +1266,14 @@ const App = {
             addBulletList(analysis.improvements);
         } else {
             addWrappedText("No major gaps were detected automatically.");
+        }
+
+        addHeading("5. User Notes");
+        const userNotes = this.getNotesText();
+        if (userNotes) {
+            addWrappedText(userNotes, 11, 15, 8);
+        } else {
+            addWrappedText("No notes were entered for this session.", 11, 15, 8);
         }
 
         doc.save(this.config.reportFileName);
