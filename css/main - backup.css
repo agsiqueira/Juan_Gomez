@@ -22,18 +22,21 @@
   bottom: 20px;
   right: 20px;
   z-index: 1000;
-  width: min(300px, calc(100vw - 40px));
 }
 
 .control-panel {
-  width: 100%;
+  width: 300px;
   box-sizing: border-box;
+
   background: rgba(255,255,255,0.6);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
+
   padding: 12px;
   border-radius: 10px;
+
   box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -46,7 +49,6 @@
 
 .top-buttons .rounded-btn {
   flex: 1;
-  min-width: 0;
 }
 
 .bottom-button {
@@ -61,11 +63,8 @@ df-messenger {
   --df-messenger-button-titlebar-color: #1e88e5;
 }
 
-html,
 body {
   margin: 1px;
-  max-width: 100%;
-  overflow-x: hidden;
 }
 
 /* PATIENT INFORMATION PANEL */
@@ -75,12 +74,14 @@ body {
   top: 80px;
   left: 20px;
 
-  width: min(420px, calc(50vw - 40px));
-  max-width: calc(100vw - 40px);
-  max-height: min(60vh, 520px);
+  width: 420px;
+  max-width: 420px;
+
+  max-height: 60vh;
 
   display: flex;
   flex-direction: column;
+
   z-index: 10;
 }
 
@@ -96,12 +97,14 @@ body {
   bottom: 20px;
   left: 20px;
 
-  width: min(420px, calc(50vw - 40px));
-  max-width: calc(100vw - 40px);
-  height: min(320px, 32vh);
+  width: 420px;
+  max-width: 420px;
+
+  height: 320px;
 
   display: flex;
   flex-direction: column;
+
   z-index: 10;
 }
 
@@ -116,7 +119,17 @@ body {
 
 /* VIDEO */
 
-#myVideo,
+#myVideo {
+  z-index: -2;
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 #idleVideo {
   z-index: -2;
   position: absolute;
@@ -168,7 +181,7 @@ body {
   background-color: white;
   padding: 30px;
   border-radius: 12px;
-  width: min(400px, calc(100vw - 40px));
+  width: 400px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.25);
   position: relative;
   text-align: center;
@@ -181,8 +194,6 @@ body {
   right: 16px;
   height: 3vh;
   width: 3vh;
-  min-width: 32px;
-  min-height: 32px;
   border: none;
   border-radius: 50%;
   font-size: 24px;
@@ -196,26 +207,27 @@ body {
 
 .chat-container {
   position: fixed;
+
   top: 80px;
   bottom: 170px;
-  right: 20px;
 
-  width: min(300px, calc(50vw - 40px));
-  max-width: calc(100vw - 40px);
+  right: 20px;
+  width: 300px;
 
   background-color: #ffffff;
   border-radius: 5px;
+
   box-shadow: rgba(0, 0, 0, 0.24) 1px 4px 15px 0px;
 
   display: flex;
   flex-direction: column;
   overflow: hidden;
+
   z-index: 100;
 }
 
 #chat-box {
   flex: 1 1 auto;
-  min-height: 0;
   padding: 12px;
   display: flex;
   flex-direction: column;
@@ -232,7 +244,6 @@ body {
 
 .chat-input input {
   flex: 1;
-  min-width: 0;
   padding: 0px;
   font-size: 14px;
   outline: none;
@@ -281,12 +292,9 @@ body {
   font-family: "Google Sans","Helvetica Neue",sans-serif;
   font-size: 14px;
   margin-top: 10px;
-  width: fit-content;
-  max-width: min(220px, 80%);
+  width: 200px;
   padding: 7px 16px;
   box-shadow: 0px 1px 2px rgba(0,0,0,0.1);
-  word-wrap: break-word;
-  overflow-wrap: break-word;
 }
 
 .df-message-bubble.user {
@@ -313,7 +321,6 @@ body {
   height: 50px;
   justify-content: space-between;
   padding-left: 15px;
-  padding-right: 15px;
 }
 
 /* subtle alignment grid */
@@ -340,112 +347,4 @@ body::after {
   background: rgba(0,0,0,0.06);
   pointer-events: none;
   z-index: 0;
-}
-
-/* MEDIUM SCREENS */
-
-@media (max-width: 1200px) {
-  #prog,
-  #discoveries {
-    width: min(380px, calc(50vw - 30px));
-  }
-
-  .chat-container,
-  #floating-ui {
-    width: min(280px, calc(50vw - 30px));
-  }
-
-  body::before,
-  body::after {
-    display: none;
-  }
-}
-
-/* SMALL LAPTOPS / TABLETS */
-
-@media (max-width: 900px) {
-  #prog,
-  #discoveries {
-    left: 12px;
-    width: min(340px, calc(50vw - 18px));
-  }
-
-  .chat-container {
-    right: 12px;
-    width: min(260px, calc(50vw - 18px));
-    top: 70px;
-    bottom: 160px;
-  }
-
-  #floating-ui {
-    right: 12px;
-    bottom: 12px;
-    width: min(260px, calc(50vw - 18px));
-  }
-
-  #discoveries {
-    bottom: 12px;
-    height: min(260px, 28vh);
-  }
-
-  #prog {
-    top: 70px;
-    max-height: min(52vh, 420px);
-  }
-
-  .rounded-btn {
-    padding: 10px 16px;
-    font-size: 14px;
-  }
-}
-
-/* VERY SMALL SCREENS */
-
-@media (max-width: 700px) {
-  #prog {
-    top: 12px;
-    left: 12px;
-    right: 12px;
-    width: auto;
-    max-width: none;
-    max-height: 26vh;
-  }
-
-  .chat-container {
-    top: calc(26vh + 32px);
-    left: 12px;
-    right: 12px;
-    width: auto;
-    max-width: none;
-    bottom: 150px;
-  }
-
-  #floating-ui {
-    left: 12px;
-    right: 12px;
-    bottom: 12px;
-    width: auto;
-  }
-
-  #discoveries {
-    left: 12px;
-    right: 12px;
-    width: auto;
-    max-width: none;
-    bottom: 96px;
-    height: 120px;
-  }
-
-  .top-buttons {
-    flex-direction: column;
-  }
-
-  .df-message-bubble {
-    max-width: 85%;
-  }
-
-  .title-wrapper {
-    font-size: 16px;
-    height: 44px;
-  }
 }
