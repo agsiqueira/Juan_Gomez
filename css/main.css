@@ -41,8 +41,7 @@ const App = {
         preSleepVideoFile: "sleep_message.mp4",
         wakeVideoFile: "wake.mp4",
         sleepAfterMs: 4 * 60 * 1000,
-        reportFileName: "Juan_Gomez_Report.pdf",
-        defaultPoster: "https://agsdentistry.s3.us-east-1.amazonaws.com/assets/images/poster.png"
+        reportFileName: "Juan_Gomez_Report.pdf"
     },
 
     elements: {
@@ -200,22 +199,13 @@ const App = {
 
         const preSleepUrl = this.getVideoUrlByFile(this.config.preSleepVideoFile);
 
-        vid.setAttribute("playsinline", "");
-        vid.setAttribute("webkit-playsinline", "");
-        vid.setAttribute("preload", "auto");
-        vid.poster = this.config.defaultPoster;
+        idle.pause();
+        idle.style.opacity = "0";
 
         vid.src = preSleepUrl;
         vid.load();
         vid.muted = false;
         vid.currentTime = 0;
-        vid.style.opacity = "0";
-        idle.style.opacity = "1";
-
-        await this.waitForVideoReady(vid);
-
-        idle.pause();
-        idle.style.opacity = "0";
         vid.style.opacity = "1";
 
         try {
@@ -239,22 +229,13 @@ const App = {
 
         if (!vid || !idle) return;
 
-        vid.setAttribute("playsinline", "");
-        vid.setAttribute("webkit-playsinline", "");
-        vid.setAttribute("preload", "auto");
-        vid.poster = this.config.defaultPoster;
+        idle.pause();
+        idle.style.opacity = "0";
 
         vid.src = sleepUrl;
         vid.load();
         vid.muted = false;
         vid.currentTime = 0;
-        vid.style.opacity = "0";
-        idle.style.opacity = "1";
-
-        await this.waitForVideoReady(vid);
-
-        idle.pause();
-        idle.style.opacity = "0";
         vid.style.opacity = "1";
 
         vid.onended = async () => {
@@ -293,22 +274,13 @@ const App = {
 
         const wakeUrl = this.getVideoUrlByFile(this.config.wakeVideoFile);
 
-        vid.setAttribute("playsinline", "");
-        vid.setAttribute("webkit-playsinline", "");
-        vid.setAttribute("preload", "auto");
-        vid.poster = this.config.defaultPoster;
+        idle.pause();
+        idle.style.opacity = "0";
 
         vid.src = wakeUrl;
         vid.load();
         vid.muted = false;
         vid.currentTime = 0;
-        vid.style.opacity = "0";
-        idle.style.opacity = "1";
-
-        await this.waitForVideoReady(vid);
-
-        idle.pause();
-        idle.style.opacity = "0";
         vid.style.opacity = "1";
 
         try {
@@ -382,7 +354,7 @@ const App = {
                 vid.style.opacity = "0";
                 idle.style.opacity = "1";
 
-                await this.waitForVideoReady(vid);
+                await this.waitForVideoFrame(vid);
 
                 idle.pause();
                 idle.style.opacity = "0";
@@ -600,15 +572,11 @@ const App = {
                 this.state.queuedVid = null;
 
                 const vid = this.changeVid(url);
-                if (!vid) {
-                    this.switchIdle();
-                    return;
-                }
 
                 vid.style.opacity = "0";
                 idle.style.opacity = "1";
 
-                await this.waitForVideoReady(vid);
+                await this.waitForVideoFrame(vid);
 
                 idle.style.opacity = "0";
                 vid.style.opacity = "1";
@@ -671,8 +639,7 @@ const App = {
 
         vid.setAttribute("playsinline", "");
         vid.setAttribute("webkit-playsinline", "");
-        vid.setAttribute("preload", "auto");
-        vid.poster = this.config.defaultPoster;
+        vid.setAttribute("preload", "metadata");
 
         vid.src = url;
         vid.load();
@@ -681,9 +648,14 @@ const App = {
         return vid;
     },
 
-    waitForVideoReady(video) {
+    waitForVideoFrame(video) {
         return new Promise((resolve) => {
             if (!video) {
+                resolve();
+                return;
+            }
+
+            if (video.readyState >= 2) {
                 resolve();
                 return;
             }
@@ -693,11 +665,6 @@ const App = {
                 video.removeEventListener("canplay", done);
                 resolve();
             };
-
-            if (video.readyState >= 2) {
-                resolve();
-                return;
-            }
 
             video.addEventListener("loadeddata", done, { once: true });
             video.addEventListener("canplay", done, { once: true });
@@ -765,7 +732,7 @@ const App = {
         vid.style.opacity = "0";
         idle.style.opacity = "1";
 
-        await this.waitForVideoReady(vid);
+        await this.waitForVideoFrame(vid);
 
         idle.pause();
         idle.style.opacity = "0";
