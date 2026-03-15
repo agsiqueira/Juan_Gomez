@@ -39,8 +39,7 @@ const App = {
         sleepVideoFileName: "sleep.mp4",
         preSleepVideoFile: "sleep_message.mp4",
         wakeVideoFile: "wake.mp4",
-        sleepAfterMs: 4 * 60 * 1000,
-        reportFileName: "Juan_Gomez_Report.pdf"
+        sleepAfterMs: 4 * 60 * 1000
     },
 
     elements: {
@@ -55,9 +54,7 @@ const App = {
         reply: null,
         gptAnswer: null,
         focusPopup: null,
-        outroIframe: null,
-        patientInfoBox: null,
-        discoveriesHeader: null
+        outroIframe: null
     },
 
     discoveryDefinitions: {},
@@ -92,8 +89,6 @@ const App = {
         this.elements.gptAnswer = document.getElementById("gptAnswer");
         this.elements.focusPopup = document.getElementById("focusPopup");
         this.elements.outroIframe = document.getElementById("outro");
-        this.elements.patientInfoBox = document.querySelector("#prog .alert.alert-info");
-        this.elements.discoveriesHeader = document.querySelector("#discoveries .title-wrapper");
     },
 
     initSession() {
@@ -106,27 +101,20 @@ const App = {
     },
 
     async loadDiscoveryMap() {
-        try {
-            const response = await fetch("./discoveryMap.json");
+        const response = await fetch("./discoveryMap.json");
 
-            if (!response.ok) {
-                throw new Error(`Failed to load discoveryMap.json: HTTP ${response.status}`);
-            }
+        if (!response.ok) {
+            throw new Error(`Failed to load discoveryMap.json: HTTP ${response.status}`);
+        }
 
-            const data = await response.json();
+        const data = await response.json();
 
-            this.discoveryDefinitions = data.discoveryDefinitions || {};
-            this.answerIndexToDiscovery = data.answerIndexToDiscovery || {};
-            this.sceneConfig = data.sceneConfig || {};
+        this.discoveryDefinitions = data.discoveryDefinitions || {};
+        this.answerIndexToDiscovery = data.answerIndexToDiscovery || {};
+        this.sceneConfig = data.sceneConfig || {};
 
-            if (data.config?.totalDiscoveriesTarget) {
-                this.config.totalDiscoveriesTarget = data.config.totalDiscoveriesTarget;
-            }
-        } catch (error) {
-            console.error("Could not load discovery map. Using empty defaults.", error);
-            this.discoveryDefinitions = {};
-            this.answerIndexToDiscovery = {};
-            this.sceneConfig = {};
+        if (data.config?.totalDiscoveriesTarget) {
+            this.config.totalDiscoveriesTarget = data.config.totalDiscoveriesTarget;
         }
     },
 
@@ -135,11 +123,7 @@ const App = {
     },
 
     getSleepVideoUrl() {
-        return this.getVideoUrlByFile(this.config.sleepVideoFileName);
-    },
-
-    getVideoUrlById(videoId) {
-        return this.config.AWS_videoURL_Base + String(videoId).padStart(3, "0") + ".mp4";
+        return this.config.AWS_videoURL_Base + this.config.sleepVideoFileName;
     },
 
     async markUserInteraction() {
@@ -179,7 +163,11 @@ const App = {
         }
 
         this.state.isSleeping = true;
-        this.stopOpioidPromptTimer();
+
+        if (this.state.opioidPromptIntervalId) {
+            clearInterval(this.state.opioidPromptIntervalId);
+            this.state.opioidPromptIntervalId = null;
+        }
 
         const idle = this.elements.idleVideo;
         const vid = this.elements.mainVideo;
@@ -203,7 +191,7 @@ const App = {
             await vid.play();
         } catch (err) {
             console.error("Error starting pre-sleep video:", err);
-            await this.startSleepLoop();
+            this.startSleepLoop();
             return;
         }
 
@@ -368,13 +356,6 @@ const App = {
             });
         }
 
-        const reportBtn = document.getElementById("downloadReportBtn");
-        if (reportBtn) {
-            reportBtn.addEventListener("click", () => {
-                this.generatePDFReport();
-            });
-        }
-
         document.querySelectorAll(".close-button").forEach((button) => {
             button.addEventListener("click", () => {
                 const popup = button.closest(".popup-overlay");
@@ -384,7 +365,7 @@ const App = {
     },
 
     updateDiscoveriesHeader() {
-        const header = this.elements.discoveriesHeader || document.querySelector("#discoveries .title-wrapper");
+        const header = document.querySelector("#discoveries .title-wrapper");
         if (header) {
             header.textContent = `Discoveries (${this.state.foundDiscoveries.size}/${this.config.totalDiscoveriesTarget})`;
         }
@@ -564,6 +545,10 @@ const App = {
 
     isIntentVideo(replyId) {
         return replyId >= this.config.intentMinId && replyId <= this.config.intentMaxId;
+    },
+
+    getVideoUrlById(videoId) {
+        return this.config.AWS_videoURL_Base + String(videoId).padStart(3, "0") + ".mp4";
     },
 
     isIdleCurrentlyVisible() {
@@ -965,205 +950,6 @@ const App = {
         }
     },
 
-    getPatientInformationText() {
-        if (this.elements.patientInfoBox) {
-            return this.elements.patientInfoBox.innerText.trim();
-        }
-
-        return "Patient information unavailable.";
-    },
-
-    getDiscoveredItemsByScene() {
-        const grouped = {};
-
-        Object.keys(this.sceneConfig).forEach((sceneKey) => {
-            grouped[sceneKey] = [];
-        });
-
-        for (const discoveryId of this.state.foundDiscoveries) {
-            const discovery = this.discoveryDefinitions[discoveryId];
-            if (!discovery) continue;
-
-            const key = String(discovery.scene);
-            if (!grouped[key]) grouped[key] = [];
-            grouped[key].push(discovery.desc);
-        }
-
-        return grouped;
-    },
-
-    buildInstructorAnalysis() {
-        const total = this.state.foundDiscoveries.size;
-        const grouped = this.getDiscoveredItemsByScene();
-
-        const rapportCount = (grouped["1"] || []).length;
-        const painCount = (grouped["2"] || []).length;
-        const empathyCount = (grouped["3"] || []).length;
-        const opioidCount = (grouped["4"] || []).length;
-
-        const strengths = [];
-        const improvements = [];
-
-        if (rapportCount >= 2) {
-            strengths.push("The student established rapport and gathered basic identifying information.");
-        } else {
-            improvements.push("Establish rapport earlier by confirming identity and opening the encounter more clearly.");
-        }
-
-        if (painCount >= 3) {
-            strengths.push("The student explored the dental injury and pain characteristics effectively.");
-        } else {
-            improvements.push("Explore the injury more systematically, including onset, severity, and pain quality.");
-        }
-
-        if (empathyCount >= 2) {
-            strengths.push("The student recognized emotional or empathic opportunities in the interaction.");
-        } else {
-            improvements.push("Use more empathic language and respond to distress, fear, or anxiety more directly.");
-        }
-
-        if (opioidCount >= 2) {
-            strengths.push("The student identified opioid-seeking cues and medication-related concerns.");
-        } else {
-            improvements.push("Probe medication expectations and respond more explicitly to opioid-seeking language.");
-        }
-
-        let overall = "Needs Improvement";
-        if (total >= 12) overall = "Excellent";
-        else if (total >= 7) overall = "Good";
-
-        return {
-            overall,
-            strengths,
-            improvements,
-            summary: `Overall performance: ${overall}. The student identified ${total} of ${this.config.totalDiscoveriesTarget} discoveries.`
-        };
-    },
-
-    generatePDFReport() {
-        if (!window.jspdf || !window.jspdf.jsPDF) {
-            console.error("jsPDF is not available.");
-            return;
-        }
-
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({ unit: "pt", format: "letter" });
-
-        const marginX = 40;
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const pageHeight = doc.internal.pageSize.getHeight();
-        const maxTextWidth = pageWidth - marginX * 2;
-        let y = 40;
-
-        const ensurePageSpace = (needed = 20) => {
-            if (y + needed > pageHeight - 40) {
-                doc.addPage();
-                y = 40;
-            }
-        };
-
-        const addWrappedText = (text, size = 11, lineHeight = 15, extraSpace = 6) => {
-            if (!text) return;
-            doc.setFontSize(size);
-            const lines = doc.splitTextToSize(String(text), maxTextWidth);
-            lines.forEach((line) => {
-                ensurePageSpace(lineHeight);
-                doc.text(line, marginX, y);
-                y += lineHeight;
-            });
-            y += extraSpace;
-        };
-
-        const addHeading = (text, size = 16) => {
-            ensurePageSpace(26);
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(size);
-            doc.text(text, marginX, y);
-            y += 22;
-            doc.setFont("helvetica", "normal");
-        };
-
-        const addBulletList = (items) => {
-            items.forEach((item) => addWrappedText(`• ${item}`, 11, 15, 2));
-            y += 4;
-        };
-
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(20);
-        doc.text("Juan Gomez Interaction Report", marginX, y);
-        y += 28;
-        doc.setFont("helvetica", "normal");
-
-        addWrappedText(`Session ID: ${this.state.sessionId}`);
-        addWrappedText(`Duration: ${this.getElapsedTimeLabel()}`);
-        addWrappedText(`Generated: ${new Date().toLocaleString()}`);
-
-        addHeading("1. Patient Information");
-        addWrappedText(this.getPatientInformationText(), 11, 15, 8);
-
-        addHeading("2. Discoveries");
-        const grouped = this.getDiscoveredItemsByScene();
-        Object.keys(this.sceneConfig)
-            .sort((a, b) => Number(a) - Number(b))
-            .forEach((sceneKey) => {
-                const scene = this.sceneConfig[sceneKey];
-                const items = grouped[sceneKey] || [];
-                ensurePageSpace(22);
-                doc.setFont("helvetica", "bold");
-                doc.setFontSize(12);
-                doc.text(`${scene.category} (${items.length}/${scene.total})`, marginX, y);
-                y += 18;
-                doc.setFont("helvetica", "normal");
-                if (items.length === 0) {
-                    addWrappedText("No discoveries recorded in this category.", 11, 15, 6);
-                } else {
-                    addBulletList(items);
-                }
-            });
-
-        addHeading("3. Interaction Transcript");
-        if (this.state.logData.length === 0) {
-            addWrappedText("No transcript entries recorded.");
-        } else {
-            this.state.logData.forEach((row) => {
-                const [question, answer, intentId] = row;
-                addWrappedText(`Student/System: ${question}`, 11, 15, 2);
-                addWrappedText(`Juan/System: ${answer}`, 11, 15, 2);
-                addWrappedText(`Answer Index / Event ID: ${intentId}`, 10, 14, 6);
-            });
-        }
-
-        addHeading("4. Instructor Analysis");
-        const analysis = this.buildInstructorAnalysis();
-        addWrappedText(analysis.summary, 11, 15, 8);
-
-        ensurePageSpace(20);
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(12);
-        doc.text("Strengths", marginX, y);
-        y += 18;
-        doc.setFont("helvetica", "normal");
-        if (analysis.strengths.length) {
-            addBulletList(analysis.strengths);
-        } else {
-            addWrappedText("No major strengths were detected automatically.");
-        }
-
-        ensurePageSpace(20);
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(12);
-        doc.text("Areas for Improvement", marginX, y);
-        y += 18;
-        doc.setFont("helvetica", "normal");
-        if (analysis.improvements.length) {
-            addBulletList(analysis.improvements);
-        } else {
-            addWrappedText("No major gaps were detected automatically.");
-        }
-
-        doc.save(this.config.reportFileName);
-    },
-
     async redirectPage() {
         this.stopOpioidPromptTimer();
 
@@ -1191,8 +977,6 @@ const App = {
         }
     }
 };
-
-window.App = App;
 
 document.addEventListener("DOMContentLoaded", async () => {
     try {
