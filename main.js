@@ -567,6 +567,15 @@ const App = {
                 this.state.queuedVid = null;
 
                 const vid = this.changeVid(url);
+                if (!vid) {
+                    this.switchIdle();
+                    return;
+                }
+
+                vid.style.opacity = "0";
+                idle.style.opacity = "1";
+
+                await this.waitForVideoFrame(vid);
 
                 idle.style.opacity = "0";
                 vid.style.opacity = "1";
@@ -627,11 +636,38 @@ const App = {
         const vid = this.elements.mainVideo;
         if (!vid) return null;
 
+        vid.setAttribute("playsinline", "");
+        vid.setAttribute("webkit-playsinline", "");
+        vid.setAttribute("preload", "metadata");
+
         vid.src = url;
         vid.load();
         vid.muted = false;
         vid.currentTime = 0;
         return vid;
+    },
+
+    waitForVideoFrame(video) {
+        return new Promise((resolve) => {
+            if (!video) {
+                resolve();
+                return;
+            }
+
+            if (video.readyState >= 2) {
+                resolve();
+                return;
+            }
+
+            const done = () => {
+                video.removeEventListener("loadeddata", done);
+                video.removeEventListener("canplay", done);
+                resolve();
+            };
+
+            video.addEventListener("loadeddata", done, { once: true });
+            video.addEventListener("canplay", done, { once: true });
+        });
     },
 
     getElapsedTimeLabel() {
@@ -691,6 +727,11 @@ const App = {
         if (!idle || !vid) return;
 
         this.stopAllMedia();
+
+        vid.style.opacity = "0";
+        idle.style.opacity = "1";
+
+        await this.waitForVideoFrame(vid);
 
         idle.pause();
         idle.style.opacity = "0";
