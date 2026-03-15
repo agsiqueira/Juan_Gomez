@@ -567,15 +567,6 @@ const App = {
                 this.state.queuedVid = null;
 
                 const vid = this.changeVid(url);
-                if (!vid) {
-                    this.switchIdle();
-                    return;
-                }
-
-                vid.style.opacity = "0";
-                idle.style.opacity = "1";
-
-                await this.waitForVideoFrame(vid);
 
                 idle.style.opacity = "0";
                 vid.style.opacity = "1";
@@ -643,24 +634,6 @@ const App = {
         return vid;
     },
 
-
-    waitForVideoFrame(video) {
-        return new Promise((resolve) => {
-            if (!video) {
-                resolve();
-                return;
-            }
-
-            if (video.readyState >= 2) {
-                resolve();
-                return;
-            }
-
-            const done = () => resolve();
-            video.addEventListener("loadeddata", done, { once: true });
-        });
-    },
-
     getElapsedTimeLabel() {
         if (!this.state.interactionStartTime) return "[00:00]";
 
@@ -718,11 +691,6 @@ const App = {
         if (!idle || !vid) return;
 
         this.stopAllMedia();
-
-        vid.style.opacity = "0";
-        idle.style.opacity = "1";
-
-        await this.waitForVideoFrame(vid);
 
         idle.pause();
         idle.style.opacity = "0";
