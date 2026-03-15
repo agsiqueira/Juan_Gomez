@@ -37,6 +37,8 @@ const App = {
         teethReactionVideoId: 428,
         totalDiscoveriesTarget: 15,
         sleepVideoFileName: "sleep.mp4",
+        preSleepVideoFile: "sleep_message.mp4",
+        wakeVideoFile: "wake.mp4",
         sleepAfterMs: 4 * 60 * 1000
     },
 
@@ -116,13 +118,17 @@ const App = {
         }
     },
 
+    getVideoUrlByFile(fileName) {
+        return this.config.AWS_videoURL_Base + fileName;
+    },
+
     getSleepVideoUrl() {
         return this.config.AWS_videoURL_Base + this.config.sleepVideoFileName;
     },
 
-    markUserInteraction() {
+    async markUserInteraction() {
         if (this.state.isSleeping) {
-            this.wakeUpFromSleep();
+            await this.wakeUpFromSleep();
         }
         this.resetSleepTimer();
     },
@@ -137,7 +143,7 @@ const App = {
         }, this.config.sleepAfterMs);
     },
 
-    enterSleepMode() {
+    async enterSleepMode() {
         if (this.state.isSleeping) return;
 
         const mainVideoPlaying =
@@ -163,16 +169,52 @@ const App = {
             this.state.opioidPromptIntervalId = null;
         }
 
-        const sleepUrl = this.getSleepVideoUrl();
         const idle = this.elements.idleVideo;
-        const vid = this.changeVid(sleepUrl);
+        const vid = this.elements.mainVideo;
 
         if (!idle || !vid) return;
 
         this.stopAllMedia();
 
+        const preSleepUrl = this.getVideoUrlByFile(this.config.preSleepVideoFile);
+
         idle.pause();
         idle.style.opacity = "0";
+
+        vid.src = preSleepUrl;
+        vid.load();
+        vid.muted = false;
+        vid.currentTime = 0;
+        vid.style.opacity = "1";
+
+        try {
+            await vid.play();
+        } catch (err) {
+            console.error("Error starting pre-sleep video:", err);
+            this.startSleepLoop();
+            return;
+        }
+
+        vid.onended = () => {
+            if (!this.state.isSleeping) return;
+            this.startSleepLoop();
+        };
+    },
+
+    async startSleepLoop() {
+        const vid = this.elements.mainVideo;
+        const idle = this.elements.idleVideo;
+        const sleepUrl = this.getSleepVideoUrl();
+
+        if (!vid || !idle) return;
+
+        idle.pause();
+        idle.style.opacity = "0";
+
+        vid.src = sleepUrl;
+        vid.load();
+        vid.muted = false;
+        vid.currentTime = 0;
         vid.style.opacity = "1";
 
         vid.onended = async () => {
@@ -186,29 +228,68 @@ const App = {
             }
         };
 
-        vid.play().catch((err) => {
+        try {
+            await vid.play();
+        } catch (err) {
             console.error("Error starting sleep video:", err);
-        });
+        }
     },
 
-    wakeUpFromSleep() {
+    async wakeUpFromSleep() {
         if (!this.state.isSleeping) return;
 
         this.state.isSleeping = false;
-        this.switchIdle();
-        this.startOpioidPromptTimer();
+
+        const vid = this.elements.mainVideo;
+        const idle = this.elements.idleVideo;
+
+        if (!vid || !idle) {
+            this.switchIdle();
+            this.startOpioidPromptTimer();
+            return;
+        }
+
+        this.stopAllMedia();
+
+        const wakeUrl = this.getVideoUrlByFile(this.config.wakeVideoFile);
+
+        idle.pause();
+        idle.style.opacity = "0";
+
+        vid.src = wakeUrl;
+        vid.load();
+        vid.muted = false;
+        vid.currentTime = 0;
+        vid.style.opacity = "1";
+
+        try {
+            await vid.play();
+        } catch (err) {
+            console.error("Error starting wake video:", err);
+            this.switchIdle();
+            this.startOpioidPromptTimer();
+            return;
+        }
+
+        return new Promise((resolve) => {
+            vid.onended = () => {
+                this.switchIdle();
+                this.startOpioidPromptTimer();
+                resolve();
+            };
+        });
     },
 
     bindEvents() {
-        this.elements.sendButton?.addEventListener("click", () => {
-            this.markUserInteraction();
+        this.elements.sendButton?.addEventListener("click", async () => {
+            await this.markUserInteraction();
             this.sendMessage();
         });
 
-        this.elements.userInput?.addEventListener("keydown", (e) => {
+        this.elements.userInput?.addEventListener("keydown", async (e) => {
             if (e.key === "Enter") {
                 e.preventDefault();
-                this.markUserInteraction();
+                await this.markUserInteraction();
                 this.sendMessage();
             }
         });
@@ -227,7 +308,7 @@ const App = {
         const inspectBtn = document.getElementById("inspectTeethBtn");
         if (inspectBtn) {
             inspectBtn.addEventListener("click", async () => {
-                this.markUserInteraction();
+                await this.markUserInteraction();
 
                 const videoURL = this.getVideoUrlById(this.config.teethReactionVideoId);
 
@@ -563,10 +644,6 @@ const App = {
         const text = this.elements.userInput?.value.trim();
         if (!text) return;
 
-        if (this.state.isSleeping) {
-            this.wakeUpFromSleep();
-        }
-
         this.state.isSending = true;
 
         this.appendMessage(text, "user");
@@ -705,9 +782,9 @@ const App = {
 
         micButton.dataset.initialized = "true";
 
-        micButton.addEventListener("click", () => {
+        micButton.addEventListener("click", async () => {
             if (!this.state.isRecording) {
-                this.markUserInteraction();
+                await this.markUserInteraction();
                 this.startRecording();
             }
         });
