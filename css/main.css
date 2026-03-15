@@ -103,25 +103,23 @@ df-messenger {
 
 #prog {
   position: fixed;
-
-  bottom: 150px;     /* same vertical alignment as chat box */
+  bottom: 340px;   /* sits above discoveries */
   left: 20px;
 
   width: 420px;
   max-width: 420px;
 
-  padding-left: 1%;
-  padding-top: 1%;
   z-index: 10;
 }
 
 #discoveries {
-  min-width: 25%;
-  min-height: 10%;
-  max-width: 25%;
-  max-height: 10%;
-  padding-left: 1%;
-  position: relative;
+  position: fixed;
+  bottom: 150px;   /* aligned with chat box bottom */
+  left: 20px;
+
+  width: 420px;
+  max-width: 420px;
+
   z-index: 10;
 }
 
