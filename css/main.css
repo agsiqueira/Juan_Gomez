@@ -29,10 +29,15 @@ body {
 }
 
 .control-panel {
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.6); /* transparent background */
+  backdrop-filter: blur(6px);           /* soft glass effect */
+  -webkit-backdrop-filter: blur(6px);   /* Safari support */
+
   padding: 12px;
   border-radius: 10px;
+
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+
   display: flex;
   flex-direction: column;
   gap: 10px;
