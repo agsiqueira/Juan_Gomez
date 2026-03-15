@@ -325,7 +325,38 @@ body {
   padding-right: 15px;
 }
 
-@media (max-width: 980px), (max-height: 760px) {
+@media (max-height: 760px) and (min-width: 981px) {
+  #prog {
+    top: 20px;
+    bottom: 230px;
+  }
+
+  #discoveries {
+    height: 190px;
+    bottom: 20px;
+  }
+
+  .chat-container {
+    top: 20px;
+    bottom: 140px;
+  }
+
+  #floating-ui {
+    bottom: 20px;
+  }
+
+  .title-wrapper {
+    height: 44px;
+    font-size: 16px;
+  }
+
+  .rounded-btn {
+    padding: 10px 20px;
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 980px) {
   html,
   body {
     overflow-x: hidden;
@@ -360,8 +391,8 @@ body {
 
   #prog {
     height: auto;
-    max-height: none;
     min-height: 260px;
+    max-height: none;
   }
 
   #prog .messageList {
