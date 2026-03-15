@@ -28,12 +28,16 @@
 .control-panel {
   width: 100%;
   box-sizing: border-box;
+
   background: rgba(255,255,255,0.6);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
+
   padding: 12px;
   border-radius: 10px;
+
   box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -77,7 +81,9 @@ body {
 
   width: min(420px, calc(50vw - 40px));
   max-width: calc(100vw - 40px);
-  max-height: min(60vh, 520px);
+
+  /* prevents overlap with discoveries */
+  max-height: calc(100vh - 80px - 320px - 60px);
 
   display: flex;
   flex-direction: column;
@@ -98,6 +104,7 @@ body {
 
   width: min(420px, calc(50vw - 40px));
   max-width: calc(100vw - 40px);
+
   height: min(320px, 32vh);
 
   display: flex;
@@ -205,11 +212,13 @@ body {
 
   background-color: #ffffff;
   border-radius: 5px;
+
   box-shadow: rgba(0, 0, 0, 0.24) 1px 4px 15px 0px;
 
   display: flex;
   flex-direction: column;
   overflow: hidden;
+
   z-index: 100;
 }
 
@@ -286,7 +295,6 @@ body {
   padding: 7px 16px;
   box-shadow: 0px 1px 2px rgba(0,0,0,0.1);
   word-wrap: break-word;
-  overflow-wrap: break-word;
 }
 
 .df-message-bubble.user {
@@ -316,7 +324,7 @@ body {
   padding-right: 15px;
 }
 
-/* subtle alignment grid */
+/* alignment grid */
 
 body::before {
   content: "";
@@ -340,112 +348,4 @@ body::after {
   background: rgba(0,0,0,0.06);
   pointer-events: none;
   z-index: 0;
-}
-
-/* MEDIUM SCREENS */
-
-@media (max-width: 1200px) {
-  #prog,
-  #discoveries {
-    width: min(380px, calc(50vw - 30px));
-  }
-
-  .chat-container,
-  #floating-ui {
-    width: min(280px, calc(50vw - 30px));
-  }
-
-  body::before,
-  body::after {
-    display: none;
-  }
-}
-
-/* SMALL LAPTOPS / TABLETS */
-
-@media (max-width: 900px) {
-  #prog,
-  #discoveries {
-    left: 12px;
-    width: min(340px, calc(50vw - 18px));
-  }
-
-  .chat-container {
-    right: 12px;
-    width: min(260px, calc(50vw - 18px));
-    top: 70px;
-    bottom: 160px;
-  }
-
-  #floating-ui {
-    right: 12px;
-    bottom: 12px;
-    width: min(260px, calc(50vw - 18px));
-  }
-
-  #discoveries {
-    bottom: 12px;
-    height: min(260px, 28vh);
-  }
-
-  #prog {
-    top: 70px;
-    max-height: min(52vh, 420px);
-  }
-
-  .rounded-btn {
-    padding: 10px 16px;
-    font-size: 14px;
-  }
-}
-
-/* VERY SMALL SCREENS */
-
-@media (max-width: 700px) {
-  #prog {
-    top: 12px;
-    left: 12px;
-    right: 12px;
-    width: auto;
-    max-width: none;
-    max-height: 26vh;
-  }
-
-  .chat-container {
-    top: calc(26vh + 32px);
-    left: 12px;
-    right: 12px;
-    width: auto;
-    max-width: none;
-    bottom: 150px;
-  }
-
-  #floating-ui {
-    left: 12px;
-    right: 12px;
-    bottom: 12px;
-    width: auto;
-  }
-
-  #discoveries {
-    left: 12px;
-    right: 12px;
-    width: auto;
-    max-width: none;
-    bottom: 96px;
-    height: 120px;
-  }
-
-  .top-buttons {
-    flex-direction: column;
-  }
-
-  .df-message-bubble {
-    max-width: 85%;
-  }
-
-  .title-wrapper {
-    font-size: 16px;
-    height: 44px;
-  }
 }
