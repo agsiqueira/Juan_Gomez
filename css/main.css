@@ -325,7 +325,7 @@ body {
   padding-right: 15px;
 }
 
-@media (max-width: 980px) {
+@media (max-width: 980px), (max-height: 760px) {
   html,
   body {
     overflow-x: hidden;
@@ -360,18 +360,23 @@ body {
 
   #prog {
     height: auto;
-    max-height: 42vh;
-    min-height: 240px;
+    max-height: none;
+    min-height: 260px;
+  }
+
+  #prog .messageList {
+    max-height: 40vh;
+    min-height: 190px;
   }
 
   #discoveries {
-    height: 220px;
-    min-height: 220px;
+    height: 240px;
+    min-height: 240px;
   }
 
   .chat-container {
-    height: 320px;
-    min-height: 320px;
+    height: 340px;
+    min-height: 340px;
   }
 
   #floating-ui {
