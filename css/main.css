@@ -29,7 +29,7 @@ body {
 }
 
 .control-panel {
-  background: rgba(255, 255, 255, 0.6); /* transparent background */
+  background: rgba(255, 255, 255, 0.45); /* transparent background */
   backdrop-filter: blur(6px);           /* soft glass effect */
   -webkit-backdrop-filter: blur(6px);   /* Safari support */
 
