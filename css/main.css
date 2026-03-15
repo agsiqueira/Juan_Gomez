@@ -219,16 +219,21 @@ body {
 
 .chat-container {
   position: fixed;
-  bottom: 165px;
+  top: 20px;           /* aligns with Patient Information */
   right: 20px;
+
   width: 300px;
   height: 560px;
+
   background-color: #ffffff;
   border-radius: 5px;
+
   box-shadow: rgba(0, 0, 0, 0.24) 1px 4px 15px 0px;
+
   display: flex;
   flex-direction: column;
   overflow: hidden;
+
   z-index: 100;
 }
 
