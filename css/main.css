@@ -325,7 +325,7 @@ body {
   padding-right: 15px;
 }
 
-@media (max-height: 760px) and (min-width: 981px) {
+@media (max-height: 760px) and (min-width: 1181px) {
   #prog {
     top: 20px;
     bottom: 230px;
@@ -356,7 +356,7 @@ body {
   }
 }
 
-@media (max-width: 980px) {
+@media (max-width: 1180px) {
   html,
   body {
     overflow-x: hidden;
@@ -364,7 +364,7 @@ body {
   }
 
   body {
-    padding: 20px 20px 140px;
+    padding: 20px;
     box-sizing: border-box;
   }
 
@@ -373,6 +373,10 @@ body {
     display: flex;
     flex-direction: column;
     gap: 20px;
+  }
+
+  #infoContainer {
+    width: 100%;
   }
 
   #prog,
@@ -411,12 +415,21 @@ body {
   }
 
   #floating-ui {
-    position: fixed;
-    left: 20px;
-    right: 20px;
-    bottom: 20px;
-    width: auto;
-    max-width: none;
+    position: relative;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    width: 100%;
+    max-width: 100%;
+    margin-top: 20px;
+  }
+
+  .control-panel {
+    width: 100%;
+  }
+
+  .top-buttons {
+    flex-direction: column;
   }
 
   body::before,
