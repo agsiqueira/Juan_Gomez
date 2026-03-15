@@ -102,13 +102,16 @@ df-messenger {
 }
 
 #prog {
-  min-width: 25%;
-  min-height: 10%;
-  max-width: 25%;
-  max-height: 10%;
+  position: fixed;
+
+  bottom: 150px;     /* same vertical alignment as chat box */
+  left: 20px;
+
+  width: 420px;
+  max-width: 420px;
+
   padding-left: 1%;
   padding-top: 1%;
-  position: relative;
   z-index: 10;
 }
 
