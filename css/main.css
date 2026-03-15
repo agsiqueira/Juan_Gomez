@@ -136,6 +136,15 @@ df-messenger {
   z-index: auto;
 }
 
+#discoveries .discoveryList {
+  max-height: 220px;
+}
+
+#prog .messageList {
+  max-height: 260px;
+  overflow-y: auto;
+}
+
 .disc_category {
   background-color: #42a5f5;
   color: white;
