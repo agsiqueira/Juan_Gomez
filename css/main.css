@@ -20,7 +20,7 @@
 #floating-ui {
   position: fixed;
   bottom: 20px;
-  right: 160px;
+  right: 20px;
   z-index: 1000;
 }
 

@@ -1,0 +1,58 @@
+[33me4921a4[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m aligning right and left
+[33m744aff1[m adjusting button positioning.
+[33m0f3c3b7[m fix interface
+[33me87037a[m adjusting button positioning.
+[33m28654f8[m fix interface
+[33m8fc5b00[m aligning right and left
+[33mf690c2e[m adjusting button transparency.
+[33mc71c4ad[m button box transparency.
+[33maa3f680[m fix interface
+[33m2cf547f[m adjusting button positioning.
+[33mdf5f294[m Adjusting popup issue.
+[33mece1a4a[m fixing interface.
+[33mf6eab71[m fixing popup
+[33m4f84734[m Adding pdf report.
+[33mbcb48a4[m adding wake.mp4
+[33m8229bb6[m adding sleep functionality.
+[33m2c0cdf9[m discoveries.
+[33m832318e[m Adjusting button placement.
+[33m64493ea[m aligning button plus other enhancements.
+[33macd1144[m teeth better resolution.
+[33m0bd7c5c[m teeth image.
+[33m9d707bf[m adding button for image
+[33m493468f[m adding interaction timer before questions and anwers.
+[33m91e16e9[m adding timer asking for opoids and names for discoveries.
+[33ma734faf[m fixing issues for code safety... test...
+[33mc741978[m adjusting goals and objectives on index.html
+[33m0dadb6d[m Adjusting interface text. Mostly from pt to en.
+[33m9f85e7e[m adjusting goals and objectives on index.html
+[33mce4dcaf[m adding poster
+[33m6c24e36[m raising number of videos to 150
+[33mbab16bf[m testing commit automation to AWS
+[33mec18b5f[m wrong language code last commit... oops
+[33m0ea88b2[m change language for stt
+[33m7a53f15[m temporarily change accepted video id range
+[33m7fceeb0[m show videos
+[33ma9da152[m fix issue with accessing answer_index
+[33m9f58d2f[m test
+[33ma71d1a0[m test
+[33m850d24e[m Merge branch 'main' of https://github.com/agsiqueira/Juan_Gomez
+[33meba44be[m fix videos
+[33m4c38a90[m refactor interaction logic and add test videos
+[33m2a14ca5[m test exact version
+[33m94184f4[m api request field issue
+[33me04ac84[m fix route paths
+[33m554b0ec[m test for new chatbot
+[33ma7dac3c[m change tts voice and remove translation from tts
+[33m85632f6[m test with fewer q&a
+[33m996ea6a[m fix string syntax oops
+[33m2fb3cab[m modulize js files
+[33mf4de852[m hide intro outro for testing
+[33m249519f[m Merge branch 'main' of https://github.com/agsiqueira/Juan_Gomez
+[33m0c74daa[m new prompt
+[33mb58ee06[m Create README.md
+[33m3b2e56a[m add local assets (why do we have these?)
+[33me69d3e7[m add maria files
+[33m0af8c04[m setup yml
+[33m87f4849[m test
+[33m82cd33b[m yml setup
