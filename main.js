@@ -16,7 +16,9 @@ const App = {
         sessionId: null,
         opioidPromptIntervalId: null,
         interactionStartTime: null,
-        foundDiscoveries: new Set()
+        foundDiscoveries: new Set(),
+        sleepTimeoutId: null,
+        isSleeping: false
     },
 
     config: {
@@ -33,7 +35,9 @@ const App = {
         opioidVideoId: 427,
         opioidText: "I'm in pain. Don't bother with the regular stuff; it never works. I need something much stronger. Can I have percocet?",
         teethReactionVideoId: 428,
-        totalDiscoveriesTarget: 15
+        totalDiscoveriesTarget: 15,
+        sleepVideoFileName: "sleep.mp4",
+        sleepAfterMs: 4 * 60 * 1000
     },
 
     elements: {
@@ -66,6 +70,7 @@ const App = {
         this.showMaria();
         this.setupIdleVideo();
         this.startOpioidPromptTimer();
+        this.resetSleepTimer();
         setTimeout(() => this.setupSTT(), 1500);
     },
 
@@ -111,12 +116,99 @@ const App = {
         }
     },
 
+    getSleepVideoUrl() {
+        return this.config.AWS_videoURL_Base + this.config.sleepVideoFileName;
+    },
+
+    markUserInteraction() {
+        if (this.state.isSleeping) {
+            this.wakeUpFromSleep();
+        }
+        this.resetSleepTimer();
+    },
+
+    resetSleepTimer() {
+        if (this.state.sleepTimeoutId) {
+            clearTimeout(this.state.sleepTimeoutId);
+        }
+
+        this.state.sleepTimeoutId = setTimeout(() => {
+            this.enterSleepMode();
+        }, this.config.sleepAfterMs);
+    },
+
+    enterSleepMode() {
+        if (this.state.isSleeping) return;
+
+        const mainVideoPlaying =
+            this.elements.mainVideo &&
+            !this.elements.mainVideo.paused &&
+            this.elements.mainVideo.ended === false &&
+            this.elements.mainVideo.style.opacity === "1";
+
+        const audioPlaying =
+            this.elements.audioPlayer &&
+            !this.elements.audioPlayer.paused &&
+            this.elements.audioPlayer.ended === false;
+
+        if (mainVideoPlaying || audioPlaying || this.state.isSending || this.state.isRecording) {
+            this.resetSleepTimer();
+            return;
+        }
+
+        this.state.isSleeping = true;
+
+        if (this.state.opioidPromptIntervalId) {
+            clearInterval(this.state.opioidPromptIntervalId);
+            this.state.opioidPromptIntervalId = null;
+        }
+
+        const sleepUrl = this.getSleepVideoUrl();
+        const idle = this.elements.idleVideo;
+        const vid = this.changeVid(sleepUrl);
+
+        if (!idle || !vid) return;
+
+        this.stopAllMedia();
+
+        idle.pause();
+        idle.style.opacity = "0";
+        vid.style.opacity = "1";
+
+        vid.onended = async () => {
+            if (!this.state.isSleeping) return;
+
+            vid.currentTime = 0;
+            try {
+                await vid.play();
+            } catch (err) {
+                console.error("Sleep replay failed:", err);
+            }
+        };
+
+        vid.play().catch((err) => {
+            console.error("Error starting sleep video:", err);
+        });
+    },
+
+    wakeUpFromSleep() {
+        if (!this.state.isSleeping) return;
+
+        this.state.isSleeping = false;
+        this.switchIdle();
+        this.startOpioidPromptTimer();
+    },
+
     bindEvents() {
-        this.elements.sendButton?.addEventListener("click", () => this.sendMessage());
+        this.elements.sendButton?.addEventListener("click", () => {
+            this.markUserInteraction();
+            this.sendMessage();
+        });
 
         this.elements.userInput?.addEventListener("keydown", (e) => {
             if (e.key === "Enter") {
                 e.preventDefault();
+                this.markUserInteraction();
                 this.sendMessage();
             }
         });
@@ -135,6 +227,8 @@ const App = {
         const inspectBtn = document.getElementById("inspectTeethBtn");
         if (inspectBtn) {
             inspectBtn.addEventListener("click", async () => {
+                this.markUserInteraction();
+
                 const videoURL = this.getVideoUrlById(this.config.teethReactionVideoId);
 
                 this.state.logData.push([
@@ -259,6 +353,8 @@ const App = {
         if (!idle) return;
 
         idle.onended = async () => {
+            if (this.state.isSleeping) return;
+
             if (this.state.queuedVid) {
                 const url = this.state.queuedVid;
                 this.state.queuedVid = null;
@@ -428,6 +524,8 @@ const App = {
     },
 
     async triggerOpioidPrompt() {
+        if (this.state.isSleeping) return;
+
         const videoUrl = this.getVideoUrlById(this.config.opioidVideoId);
 
         console.log("Triggering opioid prompt video:", videoUrl);
@@ -464,6 +562,10 @@ const App = {
 
         const text = this.elements.userInput?.value.trim();
         if (!text) return;
+
+        if (this.state.isSleeping) {
+            this.wakeUpFromSleep();
+        }
 
         this.state.isSending = true;
 
@@ -605,6 +707,7 @@ const App = {
 
         micButton.addEventListener("click", () => {
             if (!this.state.isRecording) {
+                this.markUserInteraction();
                 this.startRecording();
             }
         });
@@ -772,6 +875,12 @@ const App = {
 
     async redirectPage() {
         this.stopOpioidPromptTimer();
+
+        if (this.state.sleepTimeoutId) {
+            clearTimeout(this.state.sleepTimeoutId);
+            this.state.sleepTimeoutId = null;
+        }
+
         await this.createLogFile();
 
         const outroIframe = this.elements.outroIframe;
