@@ -73,7 +73,7 @@ body {
 
 #prog {
   position: fixed;
-  top: 20px;
+  top: 80px;   /* moved down */
   left: 20px;
 
   width: 420px;
@@ -219,7 +219,7 @@ body {
 
 .chat-container {
   position: fixed;
-  top: 20px;           /* aligns with Patient Information */
+  top: 80px;   /* moved down to stay aligned with Patient Information */
   right: 20px;
 
   width: 300px;
