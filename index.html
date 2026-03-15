@@ -9,10 +9,8 @@
   <script type="module" src="./main.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-  <link rel="stylesheet" href="./css/main.css" />
-  <link rel="stylesheet" type="text/css" href="./css/boilerplate/bootstrap.css" />
+  <link rel="stylesheet" href="./main.css" />
   <link href="//fonts.googleapis.com/css?family=Roboto:300" rel="stylesheet" type="text/css" />
-  <link href="./css/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
 </head>
 
 <body>
@@ -20,6 +18,9 @@
     id="myVideo"
     style="display:none"
     autoplay
+    playsinline
+    webkit-playsinline
+    preload="metadata"
     poster="https://agsdentistry.s3.us-east-1.amazonaws.com/assets/images/poster.png"
   ></video>
 
@@ -32,6 +33,9 @@
     style="display:none"
     autoplay
     muted
+    playsinline
+    webkit-playsinline
+    preload="metadata"
     poster="https://agsdentistry.s3.us-east-1.amazonaws.com/assets/images/poster.png"
   >
     <source
