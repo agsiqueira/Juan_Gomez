@@ -337,3 +337,29 @@ body {
   justify-content: space-between;
   padding-left: 15px;
 }
+
+/* subtle alignment grid */
+
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 460px;
+  width: 1px;
+  height: 100vh;
+  background: rgba(0,0,0,0.06);
+  pointer-events: none;
+  z-index: 0;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  right: 340px;
+  width: 1px;
+  height: 100vh;
+  background: rgba(0,0,0,0.06);
+  pointer-events: none;
+  z-index: 0;
+}
