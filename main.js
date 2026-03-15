@@ -26,7 +26,7 @@ const App = {
         AWS_videoURL_Base: "https://agsdentistry.s3.us-east-1.amazonaws.com/assets/videos/interaction/",
         ENDPOINT_URL: "https://verg-api-zone.cise.ufl.edu/",
         intentMinId: 1,
-        intentMaxId: 150,
+        intentMaxId: 431,
         silenceThreshold: 0.2,
         silenceDelay: 2000,
         sttLanguageCode: "en",
