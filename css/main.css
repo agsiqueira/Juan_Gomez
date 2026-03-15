@@ -101,26 +101,39 @@ df-messenger {
   object-fit: cover;
 }
 
-#prog {
-  position: fixed;
-  bottom: 340px;   /* sits above discoveries */
-  left: 20px;
-
-  width: 420px;
-  max-width: 420px;
-
+#infoContainer {
+  grid-area: 1 / 1 / 1 / 2;
+  min-width: 100%;
+  min-height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  padding-left: 1%;
+  padding-top: 1%;
+  flex-direction: column;
+  position: relative;
   z-index: 10;
 }
 
-#discoveries {
+#left-panel {
   position: fixed;
-  bottom: 150px;   /* aligned with chat box bottom */
   left: 20px;
-
+  bottom: 20px; /* aligned with control panel bottom */
   width: 420px;
-  max-width: 420px;
-
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
   z-index: 10;
+}
+
+#prog,
+#discoveries {
+  position: static;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding-left: 0;
+  padding-top: 0;
+  z-index: auto;
 }
 
 .disc_category {
