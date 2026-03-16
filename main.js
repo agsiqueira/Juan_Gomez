@@ -1016,7 +1016,7 @@ const App = {
 
             if (this.elements.micButton) {
                 this.elements.micButton.innerHTML = "⏳";
-                this.elements.micButton.title = "Gravando...";
+                this.elements.micButton.title = "Recording...";
             }
 
             this.state.silenceStart = null;
@@ -1052,7 +1052,7 @@ const App = {
 
         if (this.elements.micButton) {
             this.elements.micButton.innerHTML = "🎤";
-            this.elements.micButton.title = "Clique para falar";
+            this.elements.micButton.title = "Click to talk";
         }
     },
 
