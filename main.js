@@ -35,7 +35,7 @@ const App = {
         opioidPromptIntervalMs: 3 * 60 * 1000,
         opioidVideoId: 427,
         opioidText: "I'm in pain. Don't bother with the regular stuff; it never works. I need something much stronger. Can I have percocet?",
-        teethReactionVideoId: 428,
+        teethReactionVideoId: "wake.mp4",
         totalDiscoveriesTarget: 15,
         sleepVideoFileName: "sleep.mp4",
         preSleepVideoFile: "sleep_message.mp4",
