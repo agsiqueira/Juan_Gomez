@@ -165,9 +165,7 @@ body {
 #discoveries,
 #potentialquestions,
 .chat-container,
-#floating-ui,
 .popup-overlay {
-  position: relative;
   z-index: 100;
 }
 
