@@ -746,17 +746,18 @@ async playVideoNow(videoUrl) {
 
     if (!vid || !idle) return;
 
-    this.stopAllMedia();
+    if (this.elements.audioPlayer) {
+        this.elements.audioPlayer.pause();
+        this.elements.audioPlayer.currentTime = 0;
+        this.elements.audioPlayer.onended = null;
+    }
 
-    // Start hidden
+    vid.pause();
+    vid.currentTime = 0;
     vid.style.opacity = "0";
+    idle.style.opacity = "1";
 
-    // 🔥 Wait until video is ready BEFORE switching
     await this.waitForVideoFrame(vid);
-
-    // 🔥 Crossfade
-    vid.style.opacity = "1";
-    idle.style.opacity = "0";
 
     try {
         await vid.play();
@@ -767,15 +768,23 @@ async playVideoNow(videoUrl) {
         return;
     }
 
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+    vid.style.opacity = "1";
+
+    setTimeout(() => {
+        idle.style.opacity = "0";
+    }, 60);
+
     vid.onended = async () => {
-        vid.pause();
-        vid.currentTime = 0;
-
-        // 🔥 Fade back to idle
-        vid.style.opacity = "0";
         idle.style.opacity = "1";
+        vid.style.opacity = "0";
 
-        await this.tryPlayQueuedVideo();
+        setTimeout(async () => {
+            vid.pause();
+            vid.currentTime = 0;
+            await this.tryPlayQueuedVideo();
+        }, 180);
     };
 },
 
