@@ -175,7 +175,7 @@ startIdlePlayback() {
             console.error("Idle autoplay failed:", err);
         });
     }
-}
+},
 
     resetSleepTimer() {
         if (this.state.sleepTimeoutId) {
@@ -185,7 +185,7 @@ startIdlePlayback() {
         this.state.sleepTimeoutId = setTimeout(() => {
             this.enterSleepMode();
         }, this.config.sleepAfterMs);
-    }
+    },
 
     async enterSleepMode() {
         if (this.state.isSleeping) return;
@@ -738,7 +738,7 @@ async tryPlayQueuedVideo() {
     this.state.queuedVid = null;
 
     await this.playVideoNow(url);
-}
+},
 
 async playVideoNow(videoUrl) {
     const vid = this.changeVid(videoUrl);
