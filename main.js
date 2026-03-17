@@ -185,7 +185,7 @@ startIdlePlayback() {
         this.state.sleepTimeoutId = setTimeout(() => {
             this.enterSleepMode();
         }, this.config.sleepAfterMs);
-    },
+    }
 
     async enterSleepMode() {
         if (this.state.isSleeping) return;
