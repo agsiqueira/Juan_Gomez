@@ -126,17 +126,27 @@ body {
 }
 
 /* VIDEO */
+html, body {
+  width: 100%;
+  height: 100%;
+  background: #000;
+}
+
+body {
+  position: relative;
+}
 
 #idleVideo,
 #myVideo {
   position: fixed;
-  top: 0;
-  left: 0;
+  inset: 0;
   width: 100vw;
   height: 100vh;
   display: block;
   object-fit: cover;
+  object-position: center center;
   pointer-events: none;
+  background: #000;
 }
 
 #idleVideo {
@@ -149,13 +159,14 @@ body {
   opacity: 0;
 }
 
-/* Keep UI above videos */
+#infoContainer,
 #prog,
 #discoveries,
+#potentialquestions,
 .chat-container,
 #floating-ui,
-.popup-overlay,
-#potentialquestions {
+.popup-overlay {
+  position: relative;
   z-index: 100;
 }
 
