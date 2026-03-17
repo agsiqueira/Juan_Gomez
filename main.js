@@ -158,6 +158,25 @@ const App = {
         this.resetSleepTimer();
     },
 
+startIdlePlayback() {
+    const idle = this.elements.idleVideo;
+    if (!idle) return;
+
+    idle.setAttribute("playsinline", "");
+    idle.setAttribute("webkit-playsinline", "");
+    idle.setAttribute("preload", "auto");
+    idle.muted = true;
+    idle.loop = true;
+    idle.style.opacity = "1";
+
+    const playPromise = idle.play();
+    if (playPromise && typeof playPromise.catch === "function") {
+        playPromise.catch((err) => {
+            console.error("Idle autoplay failed:", err);
+        });
+    }
+}
+
     resetSleepTimer() {
         if (this.state.sleepTimeoutId) {
             clearTimeout(this.state.sleepTimeoutId);
@@ -351,8 +370,8 @@ const App = {
 
                 this.stopAllMedia();
 
-                idle.pause();
-                idle.style.opacity = "0";
+                
+                idle.style.opacity = "1";
                 vid.style.opacity = "1";
 
                 try {
@@ -555,47 +574,21 @@ const App = {
         }
     },
 
-    setupIdleVideo() {
+setupIdleVideo() {
     const idle = this.elements.idleVideo;
     if (!idle) return;
 
-    idle.onended = async () => {
-        if (this.state.isSleeping) return;
+    idle.loop = true;
+    idle.muted = true;
+    idle.setAttribute("playsinline", "");
+    idle.setAttribute("webkit-playsinline", "");
+    idle.setAttribute("preload", "auto");
+    idle.style.opacity = "1";
 
-        if (this.state.queuedVid) {
-            const url = this.state.queuedVid;
-            this.state.queuedVid = null;
-
-            const vid = this.changeVid(url);
-            if (!vid) {
-                this.switchIdle();
-                return;
-            }
-
-            vid.style.opacity = "0";
-            idle.style.opacity = "1";
-
-            await this.waitForVideoFrame(vid);
-
-            // Keep idle visible and playing underneath
-            vid.style.opacity = "1";
-
-            try {
-                await vid.play();
-            } catch (err) {
-                console.error("Error playing response video:", err);
-                this.switchIdle();
-                return;
-            }
-
-            vid.onended = () => {
-                this.switchIdle();
-            };
-        } else {
-            idle.currentTime = 0;
-            idle.play().catch((err) => console.error("Idle replay failed:", err));
-        }
-    };
+    const playPromise = idle.play();
+    if (playPromise && typeof playPromise.catch === "function") {
+        playPromise.catch((err) => console.error("Idle autoplay failed:", err));
+    }
 },
 
     showMaria() {
@@ -603,8 +596,9 @@ const App = {
         if (this.elements.idleVideo) this.elements.idleVideo.style.display = "block";
     },
 
-    switchIdle() {
+switchIdle() {
     const video = this.elements.mainVideo;
+    const idle = this.elements.idleVideo;
 
     if (video) {
         video.pause();
@@ -612,7 +606,13 @@ const App = {
         video.style.opacity = "0";
     }
 
-    // IMPORTANT: DO NOT touch idleVideo here
+    if (idle) {
+        idle.style.opacity = "1";
+
+        if (idle.paused) {
+            idle.play().catch((err) => console.error("Idle resume failed:", err));
+        }
+    }
 },
 
     stopAllMedia() {
@@ -717,13 +717,35 @@ const App = {
         return idleVisible && mainHidden;
     },
 
+async tryPlayQueuedVideo() {
+    if (this.state.isSleeping) return;
+    if (!this.state.queuedVid) return;
+
+    const mainVideoPlaying =
+        this.elements.mainVideo &&
+        !this.elements.mainVideo.paused &&
+        this.elements.mainVideo.ended === false &&
+        this.elements.mainVideo.style.opacity === "1";
+
+    const audioPlaying =
+        this.elements.audioPlayer &&
+        !this.elements.audioPlayer.paused &&
+        this.elements.audioPlayer.ended === false;
+
+    if (mainVideoPlaying || audioPlaying) return;
+
+    const url = this.state.queuedVid;
+    this.state.queuedVid = null;
+
+    await this.playVideoNow(url);
+}
+
 async playVideoNow(videoUrl) {
     const vid = this.changeVid(videoUrl);
     if (!vid) return;
 
     this.stopAllMedia();
 
-    // DO NOT pause idle video anymore
     vid.style.opacity = "1";
 
     try {
@@ -734,10 +756,11 @@ async playVideoNow(videoUrl) {
         return;
     }
 
-    vid.onended = () => {
+    vid.onended = async () => {
         vid.pause();
         vid.currentTime = 0;
         vid.style.opacity = "0";
+        await this.tryPlayQueuedVideo();
     };
 },
 
@@ -833,15 +856,15 @@ async playVideoNow(videoUrl) {
 
             this.maybeRegisterDiscoveryFromAnswer(replyId);
 
-            if (this.isIntentVideo(replyId)) {
-                this.state.numUnfocusedQuestions = 0;
+if (this.isIntentVideo(replyId)) {
+    this.state.numUnfocusedQuestions = 0;
 
-                const videoURL = this.getVideoUrlById(replyId);
-                console.log("Queueing video:", videoURL);
+    const videoURL = this.getVideoUrlById(replyId);
+    console.log("Queueing video:", videoURL);
 
-                this.stopAllMedia();
-                this.state.queuedVid = videoURL;
-            } else {
+    this.state.queuedVid = videoURL;
+    await this.tryPlayQueuedVideo();
+} else {
                 await this.generateTTS(replyText);
 
                 if (this.elements.question) this.elements.question.innerText = text;
@@ -901,26 +924,27 @@ async playVideoNow(videoUrl) {
         }
     },
 
-    playAudioReply() {
-        return new Promise((resolve, reject) => {
-            const audioPlayer = this.elements.audioPlayer;
-            if (!audioPlayer) {
-                resolve();
-                return;
-            }
+playAudioReply() {
+    return new Promise((resolve, reject) => {
+        const audioPlayer = this.elements.audioPlayer;
+        if (!audioPlayer) {
+            resolve();
+            return;
+        }
 
-            audioPlayer.onended = () => {
-                this.switchIdle();
-                resolve();
-            };
+        audioPlayer.onended = async () => {
+            this.switchIdle();
+            await this.tryPlayQueuedVideo();
+            resolve();
+        };
 
-            audioPlayer.play().catch((err) => {
-                console.error("Audio play failed:", err);
-                this.switchIdle();
-                reject(err);
-            });
+        audioPlayer.play().catch((err) => {
+            console.error("Audio play failed:", err);
+            this.switchIdle();
+            reject(err);
         });
-    },
+    });
+},
 
     getRMS(arr) {
         let sumSquares = 0;
