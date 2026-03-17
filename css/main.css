@@ -127,27 +127,36 @@ body {
 
 /* VIDEO */
 
-
-#idleVideo {
-  z-index: -2;
-  position: absolute;
+#idleVideo,
+#myVideo {
+  position: fixed;
   top: 0;
   left: 0;
+  width: 100vw;
+  height: 100vh;
   display: block;
-  width: 100%;
-  height: 100%;
   object-fit: cover;
+  pointer-events: none;
+}
+
+#idleVideo {
+  z-index: 1;
+  opacity: 1;
 }
 
 #myVideo {
-  z-index: -1;
-  position: absolute;
-  top: 0;
-  left: 0;
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  z-index: 2;
+  opacity: 0;
+}
+
+/* Keep UI above videos */
+#prog,
+#discoveries,
+.chat-container,
+#floating-ui,
+.popup-overlay,
+#potentialquestions {
+  z-index: 100;
 }
 
 /* DISCOVERY BUTTONS */
