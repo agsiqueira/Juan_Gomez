@@ -23,10 +23,11 @@
 
 #floating-ui {
   position: fixed;
-  bottom: 20px;
   right: 20px;
+  bottom: 20px;
   z-index: 1000;
-  width: min(320px, calc(100vw - 40px));
+
+  width: min(320px, calc(50vw - 40px));
 }
 
 .control-panel {
@@ -239,7 +240,7 @@ body {
 .chat-container {
   position: fixed;
   top: 80px;
-  bottom: 170px;
+  bottom: 120px;
   right: 20px;
 
   width: min(320px, calc(50vw - 40px));
