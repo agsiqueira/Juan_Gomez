@@ -371,10 +371,11 @@ body {
     bottom: 20px;
   }
 
-  .chat-container {
-    top: 20px;
-    bottom: 140px;
-  }
+.chat-container {
+  right: 20px;
+  bottom: 110px;
+  height: min(420px, calc(100vh - 150px));
+}
 
   #floating-ui {
     bottom: 20px;
