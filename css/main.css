@@ -148,6 +148,9 @@ body {
   object-position: center center;
   pointer-events: none;
   background: #000;
+  
+  transition: opacity 0.4s ease-in-out;   
+  will-change: opacity;
 }
 
 #idleVideo {

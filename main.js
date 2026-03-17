@@ -742,24 +742,39 @@ async tryPlayQueuedVideo() {
 
 async playVideoNow(videoUrl) {
     const vid = this.changeVid(videoUrl);
-    if (!vid) return;
+    const idle = this.elements.idleVideo;
+
+    if (!vid || !idle) return;
 
     this.stopAllMedia();
 
+    // Start hidden
+    vid.style.opacity = "0";
+
+    // 🔥 Wait until video is ready BEFORE switching
+    await this.waitForVideoFrame(vid);
+
+    // 🔥 Crossfade
     vid.style.opacity = "1";
+    idle.style.opacity = "0";
 
     try {
         await vid.play();
     } catch (err) {
         console.error("Error playing immediate video:", err);
         vid.style.opacity = "0";
+        idle.style.opacity = "1";
         return;
     }
 
     vid.onended = async () => {
         vid.pause();
         vid.currentTime = 0;
+
+        // 🔥 Fade back to idle
         vid.style.opacity = "0";
+        idle.style.opacity = "1";
+
         await this.tryPlayQueuedVideo();
     };
 },
