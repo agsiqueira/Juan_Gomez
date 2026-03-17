@@ -81,7 +81,7 @@ body {
 #prog {
   position: fixed;
   top: 80px;
-  bottom: 460px;
+  bottom: 440px;
   left: 20px;
 
   width: min(420px, calc(50vw - 40px));
