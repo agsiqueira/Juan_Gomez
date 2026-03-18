@@ -20,6 +20,7 @@ const App = {
         sleepTimeoutId: null,
         isSleeping: false,
         hasUserInteracted: false,
+        interactionTimerIntervalId: null,
         notesStorageKey: "juan_gomez_session_notes"
     },
 
@@ -63,6 +64,7 @@ const App = {
         notesButton: null,
         notesPopup: null,
         notesTextarea: null
+        interactionTimer: null
     },
 
     discoveryDefinitions: {},
@@ -73,6 +75,7 @@ const App = {
         this.cacheElements();
         this.initSession();
         this.state.interactionStartTime = Date.now();
+        this.startInteractionTimer();
 
         await this.loadDiscoveryMap();
 
@@ -85,6 +88,7 @@ const App = {
         this.startOpioidPromptTimer();
         this.resetSleepTimer();
         setTimeout(() => this.setupSTT(), 1500);
+
     },
 
     cacheElements() {
@@ -105,6 +109,7 @@ const App = {
         this.elements.notesButton = document.getElementById("notesBtn");
         this.elements.notesPopup = document.getElementById("notesPopup");
         this.elements.notesTextarea = document.getElementById("notesTextarea");
+        this.elements.interactionTimer = document.getElementById("interactionTimer");
     },
 
     initSession() {
@@ -116,6 +121,32 @@ const App = {
         this.state.sessionId = sessionId;
     },
 
+
+
+startInteractionTimer() {
+    this.updateInteractionTimer();
+
+    if (this.state.interactionTimerIntervalId) {
+        clearInterval(this.state.interactionTimerIntervalId);
+    }
+
+    this.state.interactionTimerIntervalId = setInterval(() => {
+        this.updateInteractionTimer();
+    }, 1000);
+},
+
+updateInteractionTimer() {
+    if (!this.elements.interactionTimer || !this.state.interactionStartTime) return;
+
+    const elapsedMs = Date.now() - this.state.interactionStartTime;
+    const totalSeconds = Math.floor(elapsedMs / 1000);
+
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+
+    this.elements.interactionTimer.textContent =
+        `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+},
 
 preloadVideo(url) {
     const v = document.createElement("video");
