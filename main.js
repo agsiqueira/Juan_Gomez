@@ -848,10 +848,10 @@ async playVideoNow(videoUrl) {
     async triggerOpioidPrompt() {
         if (this.state.isSleeping) return;
 
-        if (!this.state.hasUserInteracted) {
-    console.log("Skipping opioid autoplay until first user interaction.");
-    this.state.queuedVid = this.getVideoUrlById(this.config.opioidVideoId);
+if (!this.state.hasUserInteracted) {
+    console.log("Skipping opioid prompt entirely (no user interaction yet).");
     return;
+}
 }
 
         const videoUrl = this.getVideoUrlById(this.config.opioidVideoId);

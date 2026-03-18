@@ -551,6 +551,31 @@ body {
     padding-right: 8px;
   }
 
+    .popup-window {
+    width: min(320px, calc(100vw - 24px));
+    max-height: 55vh;
+    padding: 18px 16px 16px 16px;
+    overflow-y: auto;
+  }
+
+  .notes-textarea {
+    height: 22vh;
+    min-height: 120px;
+    max-height: 180px;
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  #teethPopup iframe,
+  #teethPopup img,
+  #teethPopup video,
+  #teethPopup object,
+  #teethPopup embed {
+    max-height: 22vh;
+    width: 100%;
+    object-fit: contain;
+  }
+
   body::before,
   body::after {
     display: none;
@@ -647,4 +672,7 @@ body::after {
     background: #f5fbff;
     transform: translateY(0);
   }
+
+
+
 }
