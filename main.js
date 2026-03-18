@@ -19,6 +19,7 @@ const App = {
         foundDiscoveries: new Set(),
         sleepTimeoutId: null,
         isSleeping: false,
+        hasUserInteracted: false,
         notesStorageKey: "juan_gomez_session_notes"
     },
 
@@ -162,12 +163,15 @@ preloadVideo(url) {
         return this.config.AWS_videoURL_Base + String(videoId).padStart(3, "0") + ".mp4";
     },
 
-    async markUserInteraction() {
-        if (this.state.isSleeping) {
-            await this.wakeUpFromSleep();
-        }
-        this.resetSleepTimer();
-    },
+async markUserInteraction() {
+    this.state.hasUserInteracted = true;
+
+    if (this.state.isSleeping) {
+        await this.wakeUpFromSleep();
+    }
+    this.resetSleepTimer();
+    await this.tryPlayQueuedVideo();
+},
 
 startIdlePlayback() {
     const idle = this.elements.idleVideo;
@@ -200,6 +204,12 @@ startIdlePlayback() {
 
     async enterSleepMode() {
         if (this.state.isSleeping) return;
+
+        if (!this.state.hasUserInteracted) {
+    console.log("Skipping sleep mode until first user interaction.");
+    this.resetSleepTimer();
+    return;
+}
 
         const mainVideoPlaying =
             this.elements.mainVideo &&
@@ -837,6 +847,12 @@ async playVideoNow(videoUrl) {
 
     async triggerOpioidPrompt() {
         if (this.state.isSleeping) return;
+
+        if (!this.state.hasUserInteracted) {
+    console.log("Skipping opioid autoplay until first user interaction.");
+    this.state.queuedVid = this.getVideoUrlById(this.config.opioidVideoId);
+    return;
+}
 
         const videoUrl = this.getVideoUrlById(this.config.opioidVideoId);
 
