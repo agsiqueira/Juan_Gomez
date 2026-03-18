@@ -687,7 +687,26 @@ body::after {
     background: #f5fbff;
     transform: translateY(0);
   }
+  } 
 
-
-
+  
+#discoveries {
+  font-size: 11px;
 }
+
+#discoveries .title-wrapper {
+  font-size: 13px;
+}
+
+.discovery-item {
+  font-size: 11px;
+  line-height: 1.2;
+  margin-bottom: 4px;
+}
+
+.discoveryList {
+  font-size: 11px;
+}
+
+
+
