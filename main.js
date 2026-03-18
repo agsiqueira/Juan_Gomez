@@ -123,7 +123,7 @@ preloadVideo(url) {
     v.muted = true;
     v.playsInline = true;
     v.load();
-}
+},
 
     async loadDiscoveryMap() {
         try {
