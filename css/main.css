@@ -412,75 +412,78 @@ body {
     object-fit: cover;
   }
 
-  /* top-left */
+  /* Patient info: top-left */
   #prog {
     position: fixed;
     top: 8px;
     left: 8px;
+    right: auto;
     bottom: auto;
 
-    width: 44vw;
-    max-width: 190px;
-    min-width: 140px;
-    max-height: 20vh;
+    width: 42vw;
+    max-width: 185px;
+    min-width: 135px;
+    height: 22vh;
+    min-height: 110px;
+    max-height: 150px;
 
     display: flex;
     flex-direction: column;
     overflow: hidden;
     z-index: 100;
-    opacity: 0.95;
+    opacity: 0.96;
   }
 
   #prog .messageList {
     flex: 1 1 auto;
     min-height: 0;
-    max-height: calc(20vh - 42px);
     overflow-y: auto;
     font-size: 11px;
   }
 
-  /* top-right */
+  /* Discoveries: bottom-left */
   #discoveries {
     position: fixed;
-    top: 8px;
-    right: 8px;
-    left: auto;
-    bottom: auto;
+    left: 8px;
+    right: auto;
+    top: auto;
+    bottom: 8px;
 
-    width: 44vw;
-    max-width: 190px;
-    min-width: 140px;
-    height: 20vh;
-    min-height: 120px;
+    width: 42vw;
+    max-width: 185px;
+    min-width: 135px;
+    height: 24vh;
+    min-height: 130px;
+    max-height: 170px;
 
     display: flex;
     flex-direction: column;
     overflow: hidden;
     z-index: 100;
-    opacity: 0.95;
+    opacity: 0.96;
   }
 
   .discoveryList {
     font-size: 11px;
   }
 
-  /* compact chat strip */
+  /* Chat: compact panel on right-middle */
   .chat-container {
     position: fixed;
-    left: 8px;
+    top: 80px;
     right: 8px;
-    top: auto;
-    bottom: 74px;
+    left: auto;
+    bottom: 84px;
 
-    width: auto;
-    min-width: 0;
-    max-width: none;
-    height: 11vh;
-    min-height: 86px;
-    max-height: 110px;
+    width: 44vw;
+    max-width: 210px;
+    min-width: 150px;
+    height: auto;
+    min-height: 150px;
+    max-height: calc(100dvh - 172px);
 
     z-index: 100;
-    opacity: 0.96;
+    opacity: 0.97;
   }
 
   #chat-box {
@@ -491,13 +494,13 @@ body {
 
   .df-message-bubble {
     font-size: 11px;
-    max-width: 80%;
+    max-width: 88%;
     padding: 5px 10px;
     margin-top: 6px;
   }
 
   .chat-input {
-    padding: 2px 8px 4px 8px;
+    padding: 3px 8px 5px 8px;
   }
 
   .chat-input input {
@@ -505,18 +508,19 @@ body {
   }
 
   #mic-button {
-    padding-right: 12px;
+    padding-right: 10px;
   }
 
-  /* narrow bottom dock */
+  /* Control panel: bottom-right */
   #floating-ui {
     position: fixed;
-    left: 8px;
     right: 8px;
+    left: auto;
     bottom: 8px;
 
-    width: auto;
-    max-width: none;
+    width: 44vw;
+    max-width: 210px;
+    min-width: 150px;
     margin: 0;
     z-index: 1000;
   }
@@ -532,10 +536,10 @@ body {
   }
 
   .rounded-btn {
-    min-height: 36px;
+    min-height: 34px;
     padding: 6px 8px;
-    font-size: 12px;
-    border-radius: 22px;
+    font-size: 11px;
+    border-radius: 20px;
   }
 
   .title-wrapper {
