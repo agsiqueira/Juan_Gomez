@@ -470,7 +470,7 @@ body {
   /* Chat: compact panel on right-middle */
 .chat-container {
   position: fixed;
-  top: 82px;
+  top: 8px;
   right: 8px;
   left: auto;
   bottom: auto;
