@@ -80,6 +80,7 @@ const App = {
         this.updateNotesButtonState();
         this.showMaria();
         this.setupIdleVideo();
+        this.preloadVideo(this.getVideoUrlById(this.config.opioidVideoId));
         this.startOpioidPromptTimer();
         this.resetSleepTimer();
         setTimeout(() => this.setupSTT(), 1500);
@@ -113,6 +114,16 @@ const App = {
         }
         this.state.sessionId = sessionId;
     },
+
+
+preloadVideo(url) {
+    const v = document.createElement("video");
+    v.preload = "auto";
+    v.src = url;
+    v.muted = true;
+    v.playsInline = true;
+    v.load();
+}
 
     async loadDiscoveryMap() {
         try {
@@ -643,28 +654,37 @@ switchIdle() {
         return vid;
     },
 
-    waitForVideoFrame(video) {
-        return new Promise((resolve) => {
-            if (!video) {
-                resolve();
-                return;
-            }
+waitForVideoFrame(video, timeoutMs = 4000) {
+    return new Promise((resolve) => {
+        if (!video || video.readyState >= 2) {
+            resolve();
+            return;
+        }
 
-            if (video.readyState >= 2) {
-                resolve();
-                return;
-            }
+        let finished = false;
+        let timeoutId = null;
 
-            const done = () => {
-                video.removeEventListener("loadeddata", done);
-                video.removeEventListener("canplay", done);
-                resolve();
-            };
+        const cleanup = () => {
+            video.removeEventListener("loadeddata", onReady);
+            video.removeEventListener("canplay", onReady);
+            video.removeEventListener("error", onReady);
+            if (timeoutId) clearTimeout(timeoutId);
+        };
 
-            video.addEventListener("loadeddata", done, { once: true });
-            video.addEventListener("canplay", done, { once: true });
-        });
-    },
+        const onReady = () => {
+            if (finished) return;
+            finished = true;
+            cleanup();
+            resolve();
+        };
+
+        timeoutId = setTimeout(onReady, timeoutMs);
+
+        video.addEventListener("loadeddata", onReady, { once: true });
+        video.addEventListener("canplay", onReady, { once: true });
+        video.addEventListener("error", onReady, { once: true });
+    });
+},
 
     getElapsedTimeLabel() {
         if (!this.state.interactionStartTime) return "[00:00]";
@@ -757,18 +777,20 @@ async playVideoNow(videoUrl) {
     vid.style.opacity = "0";
     idle.style.opacity = "1";
 
-    await this.waitForVideoFrame(vid);
+    await this.waitForVideoFrame(vid, 4000);
 
     try {
         await vid.play();
     } catch (err) {
-        console.error("Error playing immediate video:", err);
+        console.error("Error playing immediate video:", err, videoUrl);
         vid.style.opacity = "0";
         idle.style.opacity = "1";
         return;
     }
 
-    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    await new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve))
+    );
 
     vid.style.opacity = "1";
 
@@ -785,6 +807,14 @@ async playVideoNow(videoUrl) {
             vid.currentTime = 0;
             await this.tryPlayQueuedVideo();
         }, 180);
+    };
+
+    vid.onerror = () => {
+        console.error("Video element error while playing:", videoUrl);
+        idle.style.opacity = "1";
+        vid.style.opacity = "0";
+        vid.pause();
+        vid.currentTime = 0;
     };
 },
 
