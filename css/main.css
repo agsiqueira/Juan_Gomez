@@ -413,26 +413,23 @@ body {
   }
 
   /* Patient info: top-left */
-  #prog {
-    position: fixed;
-    top: 8px;
-    left: 8px;
-    right: auto;
-    bottom: auto;
+#prog {
+  position: fixed;
+  top: 8px;
+  left: 8px;
 
-    width: 42vw;
-    max-width: 185px;
-    min-width: 135px;
-    height: 22vh;
-    min-height: 110px;
-    max-height: 150px;
+  width: 42vw;
+  max-width: 185px;
+  min-width: 135px;
 
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    z-index: 100;
-    opacity: 0.96;
-  }
+  bottom: calc(24vh + 18px); 
+
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  z-index: 100;
+}
 
   #prog .messageList {
     flex: 1 1 auto;
@@ -442,50 +439,48 @@ body {
   }
 
   /* Discoveries: bottom-left */
-  #discoveries {
-    position: fixed;
-    left: 8px;
-    right: auto;
-    top: auto;
-    bottom: 8px;
+#discoveries {
+  position: fixed;
+  left: 8px;
+  bottom: 8px;
 
-    width: 42vw;
-    max-width: 185px;
-    min-width: 135px;
-    height: 24vh;
-    min-height: 130px;
-    max-height: 170px;
+  width: 42vw;
+  max-width: 185px;
+  min-width: 135px;
 
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    z-index: 100;
-    opacity: 0.96;
-  }
+  height: 24vh; /* fixed bottom box */
+
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  z-index: 100;
+}
 
   .discoveryList {
-    font-size: 11px;
+    font-size: 9px;
   }
 
   /* Chat: compact panel on right-middle */
 .chat-container {
   position: fixed;
+
   top: 8px;
   right: 8px;
-  left: auto;
-  bottom: auto;
 
   width: 44vw;
   max-width: 210px;
   min-width: 150px;
 
-  height: 120px;
-  min-height: 120px;
-  max-height: 120px;
+  bottom: calc(120px + 18px); 
+
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 
   z-index: 100;
-  overflow: hidden;
 }
+
 
 #chat-box {
   flex: 1 1 auto;
