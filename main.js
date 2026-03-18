@@ -63,7 +63,7 @@ const App = {
         discoveriesHeader: null,
         notesButton: null,
         notesPopup: null,
-        notesTextarea: null
+        notesTextarea: null,
         interactionTimer: null
     },
 
