@@ -932,7 +932,7 @@ async playVideoNow(videoUrl) {
         console.log("Input to GPT:", text);
 
         try {
-            const response = await fetch(this.config.ENDPOINT_URL + "JuanGomez/chat_exact", {
+            const response = await fetch(this.config.ENDPOINT_URL + "agsvh/juangomez/chat_exact", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
