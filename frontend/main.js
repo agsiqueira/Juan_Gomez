@@ -26,7 +26,6 @@ const App = {
 
     config: {
         AWS_videoURL_Base: "https://agsdentistry.s3.us-east-1.amazonaws.com/assets/videos/interaction/",
-        ENDPOINT_URL: "https://verg-api-zone.cise.ufl.edu/",
         intentMinId: 1,
         intentMaxId: 431,
         silenceThreshold: 0.2,
@@ -932,7 +931,7 @@ async playVideoNow(videoUrl) {
         console.log("Input to GPT:", text);
 
         try {
-            const response = await fetch(this.config.ENDPOINT_URL + "agsvh/juangomez/chat_exact", {
+            const response = await fetch("/api/juangomez/chat_exact", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -1006,7 +1005,7 @@ if (this.isIntentVideo(replyId)) {
                 voice_name: this.config.ttsVoiceName
             };
 
-            const response = await fetch(this.config.ENDPOINT_URL + "api/googlecloudtts", {
+            const response = await fetch("/api/googlecloudtts", {
                 headers: { "Content-Type": "application/json" },
                 method: "POST",
                 body: JSON.stringify(payload)
@@ -1099,7 +1098,7 @@ playAudioReply() {
                     formData.append("audio", audioBlob, `recording.${extension}`);
                     formData.append("language_code", this.config.sttLanguageCode);
 
-                    const response = await fetch(this.config.ENDPOINT_URL + "api/googlecloudstt", {
+                    const response = await fetch("/api/googlecloudstt", {
                         method: "POST",
                         body: formData
                     });
