@@ -25,7 +25,7 @@ const App = {
     },
 
     config: {
-        AWS_videoURL_Base: "https://agsdentistry.s3.us-east-1.amazonaws.com/assets/videos/interaction/",
+        AWS_videoURL_Base: "/assets/videos/interaction/",
         intentMinId: 1,
         intentMaxId: 431,
         silenceThreshold: 0.2,
